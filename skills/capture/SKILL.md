@@ -1,6 +1,8 @@
 ---
 name: capture
 description: Sample recent code the user has written — most-recent commits + recent file edits — and stage them for signature extraction.
+user-invocable: true
+allowed-tools: [Bash, Read, Write]
 ---
 
 # capture — stage code samples for signature extraction

@@ -2,6 +2,7 @@
 name: signature-qa
 description: Schema validator — catches malformed signature JSON before it reaches inject.
 model: haiku
+color: purple
 ---
 
 # Signature-QA

@@ -1,6 +1,8 @@
 ---
 name: inject
 description: Prepend the current signature.json to Claude's context so code suggestions match the user's style.
+user-invocable: false
+allowed-tools: [Read]
 ---
 
 # inject — signature → context

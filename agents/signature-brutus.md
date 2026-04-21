@@ -2,6 +2,7 @@
 name: signature-brutus
 description: Adversarial reviewer — challenges whether the extracted signature actually matches the samples, catches hallucinated style traits.
 model: opus
+color: red
 ---
 
 # Signature-Brutus

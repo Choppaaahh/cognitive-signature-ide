@@ -2,6 +2,7 @@
 name: signature-historian
 description: Tracks signature drift across sessions, flags unexplained changes, builds long-term style evolution record.
 model: sonnet
+color: blue
 ---
 
 # Signature-Historian

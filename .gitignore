@@ -1,4 +1,5 @@
 signature.json
+signature_history.jsonl
 .signature-cache/
 *.log
 __pycache__/

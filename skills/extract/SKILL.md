@@ -1,6 +1,8 @@
 ---
 name: extract
 description: Call Opus 4.7 on cached code samples to produce a structured signature.json capturing the user's coding style.
+user-invocable: true
+allowed-tools: [Bash, Read, Write]
 ---
 
 # extract — code samples → signature.json

@@ -1,6 +1,8 @@
 ---
 name: toggle
 description: Slash command to enable, disable, or diff the cognitive signature injection.
+user-invocable: true
+allowed-tools: [Read, Write]
 ---
 
 # toggle — /cogsig slash command
