@@ -9,7 +9,8 @@
     "domain",
     "sample_count",
     "languages",
-    "dimensions"
+    "dimensions",
+    "origin"
   ],
   "properties": {
     "version": {
@@ -19,6 +20,15 @@
     "generated_ts": {
       "type": "string",
       "description": "ISO 8601 UTC timestamp of extraction"
+    },
+    "origin": {
+      "type": "string",
+      "enum": ["self", "imported"],
+      "description": "Whether this signature was extracted from the local user's code (self) or imported from another user/team (imported)"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Optional team or workspace identifier, used when sharing signatures across collaborators"
     },
     "domain": {
       "type": "string",

@@ -89,6 +89,7 @@ def extract(samples_path: Path, schema_path: Path, model: str) -> dict:
     signature = json.loads(text)
     signature["version"] = "0.1"
     signature["generated_ts"] = datetime.now(timezone.utc).isoformat()
+    signature["origin"] = "self"
     signature["domain"] = signature.get("domain", "code")
     signature["sample_count"] = samples_doc["sample_count"]
     signature["languages"] = samples_doc["languages"]
