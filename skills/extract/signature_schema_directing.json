@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Cognitive Signature — Directing Domain v0.1",
+  "description": "Structured output of how a user directs / thinks-with an AI system — captured from raw user-typed messages in dialogue with an LLM. Contribution-signal (directive + reasoning), not co-output.",
+  "type": "object",
+  "required": [
+    "version",
+    "generated_ts",
+    "domain",
+    "sample_count",
+    "dimensions",
+    "origin"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "generated_ts": { "type": "string" },
+    "origin": {
+      "type": "string",
+      "enum": ["self", "imported"]
+    },
+    "team_id": { "type": "string" },
+    "domain": {
+      "type": "string",
+      "enum": ["code", "writing", "design", "directing"]
+    },
+    "sample_count": { "type": "integer", "minimum": 1 },
+    "dimensions": {
+      "type": "object",
+      "required": [
+        "directive_style",
+        "reframe_pattern",
+        "trust_mechanics",
+        "idiomatic_tells",
+        "iteration_cadence",
+        "compression_ratio",
+        "texture_energy"
+      ],
+      "properties": {
+        "directive_style": {
+          "type": "object",
+          "required": ["primary_mode", "terse_vs_verbose", "confidence", "evidence"],
+          "properties": {
+            "primary_mode": {
+              "type": "string",
+              "enum": ["command", "question", "hunch", "mixed"]
+            },
+            "terse_vs_verbose": {
+              "type": "string",
+              "enum": ["terse", "moderate", "verbose"]
+            },
+            "hunch_vs_data": {
+              "type": "string",
+              "enum": ["hunch-first", "data-first", "balanced"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "evidence": { "type": "string" }
+          }
+        },
+        "reframe_pattern": {
+          "type": "object",
+          "required": ["frequency", "style", "confidence"],
+          "properties": {
+            "frequency": {
+              "type": "string",
+              "enum": ["rare", "occasional", "frequent"]
+            },
+            "style": {
+              "type": "string",
+              "enum": ["hard-stop", "suggest-alternative", "socratic-question", "mixed"]
+            },
+            "typical_trigger_phrases": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "evidence": { "type": "string" }
+          }
+        },
+        "trust_mechanics": {
+          "type": "object",
+          "required": ["extend_trust_triggers", "retract_trust_triggers", "confidence"],
+          "properties": {
+            "extend_trust_triggers": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "retract_trust_triggers": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "default_stance": {
+              "type": "string",
+              "enum": ["trust-first", "verify-first", "mixed"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "evidence": { "type": "string" }
+          }
+        },
+        "idiomatic_tells": {
+          "type": "object",
+          "required": ["openings", "closings", "vocabulary_signature", "confidence"],
+          "properties": {
+            "openings": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "closings": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "vocabulary_signature": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "punctuation_habits": { "type": "string" },
+            "capitalization_style": {
+              "type": "string",
+              "enum": ["lowercase-casual", "sentence-case", "mixed", "all-caps-for-emphasis"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "iteration_cadence": {
+          "type": "object",
+          "required": ["typical_cycle_shape", "confidence"],
+          "properties": {
+            "typical_cycle_shape": {
+              "type": "string",
+              "description": "Short phrase describing the user's usual arc across turns, e.g. 'hunch → data-check → reframe → converge'"
+            },
+            "turns_to_converge": {
+              "type": "string",
+              "enum": ["1-2", "3-5", "6-10", "10+"]
+            },
+            "holds_parallel_structures": { "type": "boolean" },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "evidence": { "type": "string" }
+          }
+        },
+        "compression_ratio": {
+          "type": "object",
+          "required": ["avg_directive_chars", "preference", "confidence"],
+          "properties": {
+            "avg_directive_chars": { "type": "integer", "minimum": 0 },
+            "preference": {
+              "type": "string",
+              "enum": ["extreme-terse", "terse", "moderate", "verbose"]
+            },
+            "expects_response_compression": {
+              "type": "string",
+              "description": "What the user expects back — short answer, matched-to-directive-length, full analysis, etc."
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "texture_energy": {
+          "type": "object",
+          "required": ["baseline_energy", "confidence"],
+          "properties": {
+            "baseline_energy": {
+              "type": "string",
+              "enum": ["low", "neutral", "high", "variable"]
+            },
+            "high_energy_markers": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "low_energy_markers": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "humor_signature": { "type": "string" },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}
