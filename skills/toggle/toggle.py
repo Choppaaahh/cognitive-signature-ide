@@ -8,17 +8,15 @@ Subcommands:
     diff                            — three-way comparison of next response (Step 5)
     scope <name>                    — switch active scope (default / work / personal / ...)
     scope list                      — list all locally-available signature scopes
-    export [--team-id ID] [--out P] — write current active signature to a shareable file
-    import <path>                   — load external signature into the active scope
     capture [-- scope-args...]      — route to capture skill
     extract [-- scope-args...]      — route to extract skill
+    export [-- export-args...]      — route to export skill (team-sharing)
+    import <path> [-- args...]      — route to import_sig skill (load teammate signature)
 """
 
 from __future__ import annotations
 
-import argparse
 import json
-import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -145,72 +143,12 @@ def cmd_diff(repo: Path, _rest: list[str]) -> int:
     return 0
 
 
-def cmd_export(repo: Path, rest: list[str]) -> int:
-    ap = argparse.ArgumentParser(prog="/cogsig export", add_help=False)
-    ap.add_argument("--team-id", default=None)
-    ap.add_argument("--out", type=Path, default=None)
-    args, _ = ap.parse_known_args(rest)
-
-    state = load_state(repo)
-    scope = state["active_scope"]
-    src = signature_path_for_scope(repo, scope)
-    if not src.exists():
-        print(f"cogsig: no signature at active scope '{scope}' — nothing to export", file=sys.stderr)
-        return 1
-
-    try:
-        sig = json.loads(src.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        print(f"cogsig: {src.name} is unreadable", file=sys.stderr)
-        return 1
-
-    if args.team_id:
-        sig["team_id"] = args.team_id
-    sig.setdefault("export_ts", datetime.now(timezone.utc).isoformat())
-
-    out = args.out or (repo / f"signature.export{'-' + args.team_id if args.team_id else ''}.json")
-    out.write_text(json.dumps(sig, indent=2), encoding="utf-8")
-    tid = f" [team_id: {args.team_id}]" if args.team_id else ""
-    print(f"cogsig: exported scope '{scope}' -> {out}{tid}")
-    print("  share this file. Recipient loads with: /cogsig import <path>")
-    return 0
-
-
-def cmd_import(repo: Path, rest: list[str]) -> int:
-    if not rest:
-        print("cogsig: /cogsig import <path> — path required", file=sys.stderr)
-        return 1
-
-    src = Path(rest[0]).expanduser().resolve()
-    if not src.exists():
-        print(f"cogsig: file not found: {src}", file=sys.stderr)
-        return 1
-
-    try:
-        sig = json.loads(src.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        print(f"cogsig: {src} is not valid JSON", file=sys.stderr)
-        return 1
-
-    sig["origin"] = "imported"
-    sig["imported_ts"] = datetime.now(timezone.utc).isoformat()
-    sig["imported_from"] = str(src)
-
-    state = load_state(repo)
-    scope = state["active_scope"]
-    dst = signature_path_for_scope(repo, scope)
-    dst.write_text(json.dumps(sig, indent=2), encoding="utf-8")
-    team_id = sig.get("team_id")
-    tid = f" [team_id: {team_id}]" if team_id else ""
-    print(f"cogsig: imported -> scope '{scope}' ({dst.name}){tid}")
-    print("  origin set to 'imported'. Historian will skip drift analysis.")
-    return 0
-
-
 def cmd_route(repo: Path, skill: str, rest: list[str]) -> int:
     script_map = {
         "capture": repo / "skills" / "capture" / "capture.py",
         "extract": repo / "skills" / "extract" / "extract.py",
+        "export": repo / "skills" / "export" / "export.py",
+        "import": repo / "skills" / "import_sig" / "import_sig.py",
     }
     script = script_map.get(skill)
     if not script or not script.exists():
@@ -227,8 +165,6 @@ HANDLERS = {
     "status": cmd_status,
     "scope": cmd_scope,
     "diff": cmd_diff,
-    "export": cmd_export,
-    "import": cmd_import,
 }
 
 
@@ -255,7 +191,7 @@ def main() -> int:
 
     if command in HANDLERS:
         return HANDLERS[command](repo, rest)
-    if command in ("capture", "extract"):
+    if command in ("capture", "extract", "export", "import"):
         return cmd_route(repo, command, rest)
 
     print(f"cogsig: unknown command '{command}'", file=sys.stderr)
