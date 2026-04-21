@@ -1,0 +1,23 @@
+{
+  "name": "cognitive-signature-ide",
+  "version": "0.1.0",
+  "description": "Capture your coding signature, inject it into Claude Code's suggestions. Multi-agent governance via Managed Agents.",
+  "author": "Choppa",
+  "license": "MIT",
+  "homepage": "https://github.com/Choppaaahh/cognitive-signature-ide",
+  "skills": [
+    "skills/capture",
+    "skills/extract",
+    "skills/inject",
+    "skills/toggle"
+  ],
+  "agents": [
+    "agents/signature-brutus.md",
+    "agents/signature-qa.md",
+    "agents/signature-historian.md"
+  ],
+  "hooks": {
+    "PostToolUse": "hooks/post-tool-use.sh",
+    "SessionStart": "hooks/session-start.sh"
+  }
+}

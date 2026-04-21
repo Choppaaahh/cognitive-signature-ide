@@ -1,0 +1,9 @@
+signature.json
+.signature-cache/
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.local
+node_modules/
