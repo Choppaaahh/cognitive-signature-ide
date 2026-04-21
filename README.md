@@ -1,6 +1,6 @@
 # Cognitive Signature IDE
 
-**A Claude Code plugin that captures how YOU think — across code, writing, design, any creative domain — and injects that signature into Claude's output so it matches your voice instead of a generic one.**
+**A Claude Code plugin that captures how YOU think — and injects that signature into Claude's output so it matches your voice instead of a generic one. The architecture is domain-agnostic (code, writing, design). The hackathon demo ships the code domain end-to-end.**
 
 Built for the **Built with Opus 4.7** hackathon (Cerebral Valley + Anthropic), April 2026.
 
@@ -20,56 +20,38 @@ Claude has access to your files. It can see how you work. The gap is: **nobody's
 
 ## What this is
 
-A **general-purpose signature extractor** that points at any domain you create in. Four skills, three governance agents, two hooks — domain-agnostic by design.
+Four skills, three governance agents, two hooks.
 
-1. **Capture** — sample recent artifacts the user has actually authored (code, prose, docs, configs, design specs, anything text-form)
-2. **Extract** — one Opus 4.7 call analyzes the samples and produces a structured `signature.json` for that domain
-3. **Inject** — prepend the signature to Claude's context so suggestions match the user's signature in that domain
+1. **Capture** — sample recent artifacts the user has actually authored
+2. **Extract** — one Opus 4.7 call produces a structured `signature.json`
+3. **Inject** — prepend the signature to Claude's context so suggestions match the user's voice
 4. **Toggle** — `/cogsig on | off | diff` — flip it live, compare mine/theirs/generic side-by-side
 
-### Domains (same architecture, different dimensions)
+### Why the architecture matters more than the dimensions
 
-The core pipeline is one; the output schema adapts per domain.
+The pipeline — **capture → extract → govern → inject** — is the core loop of any system that learns from observation. Capture what the target produces. Compile it into structured patterns. Govern the patterns with adversarial + validation review. Inject them at decision time.
 
-| Domain | Signature dimensions |
-|--------|---------------------|
-| **Code** (Day 2–3 primary demo) | naming convention · comment density · function length · error handling · import organization · structural preference |
-| **Writing** (stretch) | sentence length distribution · vocabulary register · tonal temperature · paragraph cadence · idiomatic tells · punctuation habits |
-| **Design** (stretch) | palette preference · spacing density · component composition · motion preference · typographic rhythm |
-| **Any** | plug in your dimension schema, the skill pipeline stays unchanged |
+Most "AI personalization" tools skip the governance step. They capture, they extract, they inject. No review means the signature drifts, hallucinates traits, or overfits to outliers — and nothing notices. The three governance agents close that gap:
 
-Code is the first-implemented instance because it's testable, objective, and demoable in 3 minutes. The architecture is domain-agnostic — swap the extraction prompt and schema, point it at any creative output.
+- **Signature-Brutus** — adversarial pressure on every extraction: "does this actually match the samples, or is it hallucinating traits?"
+- **Signature-QA** — schema validation before signature reaches inject
+- **Signature-Historian** — drift detection across sessions, flags unexplained changes
 
-### Multi-agent governance (the depth layer)
+These run as **Claude Managed Agents** (cloud-hosted, `managed-agents-2026-04-01` beta header) — the plugin dogfoods Anthropic's own multi-agent infrastructure on the layer that makes the plugin trustworthy.
 
-Signature extraction is subjective. A single Opus call can drift, over-generalize, or pick up noise. Three governance agents review every signature update:
+### Domain-agnostic by construction
 
-- **Signature-Brutus** — adversarial: "does this signature actually match the samples, or are you hallucinating traits?"
-- **Signature-QA** — schema validation, catches malformed signature JSON before it reaches inject
-- **Signature-Historian** — tracks signature drift across sessions, flags unexplained changes
-
-On Day 4, these run as **Claude Managed Agents** (cloud-hosted, `managed-agents-2026-04-01` beta header) — the plugin dogfoods Anthropic's own multi-agent infrastructure.
+The pipeline is one. The signature schema is a parameter. Swap the schema + extraction prompt, point the capture skill at different file types, and the same pipeline extracts a signature for any creative domain. For the hackathon demo, **code is the end-to-end-shipped domain** — naming convention, comment density, function length, error handling, import organization, structural preference. Writing and design signatures are schema-swaps, not re-architectures. That work lives in **Future Directions** below — intentionally out of scope here so the demo delivers one domain deeply, not three shallowly.
 
 ### Live-signature-update (the demo moment)
 
-A `PostToolUse` hook watches your edits during the session. As you type your own code (or write, or design), the signature JSON updates in real time. The demo video shows the signature mutating as artifacts get produced — a visible, visceral "the plugin is learning you" moment.
+A `PostToolUse` hook watches your edits during the session. As you write code, the signature JSON updates in real time. The demo video shows the signature mutating as artifacts get produced — a visible, visceral "the plugin is learning you" moment.
 
-## Why this is more than a style matcher
+### On the lived basis
 
-The capture → extract → govern → inject pipeline is a **compressed cognitive scaffold**. Same primitives I use in my own long-running research environment — just carved out for one specific use case and put on an IDE rail.
+This capture→extract→govern→inject loop isn't speculative for me. I've been running a version of it on myself as a research environment — events captured as they happen, compiled into patterns, adversarially reviewed, injected at decision time. That lived N=1 is why the governance layer isn't a bolt-on here; it's load-bearing. Subjective extraction without governance compounds errors silently. I've watched it happen and caught it because the review layer was there.
 
-| General scaffold | Cognitive Signature IDE |
-|------------------|------------------------|
-| observe events (logs, breadcrumbs) | capture (observe artifacts) |
-| compile events into patterns | extract (Opus 4.7 → signature.json) |
-| promoted patterns | signature.json |
-| adversarial + QA + history agents | Signature-Brutus / QA / Historian |
-| inject patterns at session start | inject skill → context prefix |
-| reasoning-chain log | signature_history.jsonl |
-
-In other words: this plugin is a thinking-architecture distilled for IDE use. Point it at code → it matches your code. Point it at your Notion → it matches your writing. Point it at your Figma → it matches your design.
-
-The generic vector is the problem. The signature vector is the fix. And it's the same architecture end to end.
+The hackathon claim is the architecture, not the lived version. The lived version is how I know the architecture holds up in practice.
 
 ## Installation
 
@@ -98,14 +80,27 @@ cognitive-signature-ide/
 └── signature.json           ← generated, user-specific, .gitignored
 ```
 
-## Status (live)
+## Build steps
 
-- ✅ Day 1 — repo init, manifest, README, LICENSE, skill + agent scaffolds
-- ⏳ Day 2 — capture + extract end-to-end on CODE domain
-- ⏳ Day 3 — inject + /cogsig toggle + diff mode
-- ⏳ Day 4 — Managed Agents governance layer
-- ⏳ Day 5 — live-signature-update hook + multi-domain demo (writing + design) + polish
-- ⏳ Day 6 — submit by Sunday Apr 26, 8 PM EDT
+- ✅ **Step 1** — repo init, manifest, README, LICENSE, skill + agent scaffolds
+- ✅ **Step 2** — capture + extract implementation (code domain end-to-end)
+- ⏳ **Step 3** — inject skill + `/cogsig` toggle + diff mode
+- ⏳ **Step 4** — Managed Agents governance layer + n=10 blind measurement
+- ⏳ **Step 5** — live-signature-update hook + polish + Loom recording
+- ⏳ **Step 6** — submission
+
+## Measurement
+
+A pre-submission blind test: 10 prompts, Claude answers each under three conditions — baseline / generic-signature placebo / user's real signature injected. The author picks which output is theirs, no labels visible. Result published in the repo with the submission. This is the Impact-30% grounding — not a theoretical claim, a measurable effect.
+
+## Future directions (out of scope for submission)
+
+- **Writing domain** — sentence length, tonal register, paragraph cadence, idiomatic tells. Schema-swap, same pipeline.
+- **Design domain** — palette preference, spacing density, component composition. Same pipeline, non-code capture layer.
+- **Multi-signature switching** — per-project signatures (work vs personal repos)
+- **Signature export/import** — team-level style sharing without code sharing
+
+These are architecture-supported but deliberately not implemented for the hackathon. One domain shipped deeply beats three shipped shallowly.
 
 ## License
 
