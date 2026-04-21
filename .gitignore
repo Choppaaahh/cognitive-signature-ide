@@ -4,6 +4,7 @@ signature_history.jsonl
 signature_export*.json
 .signature-cache/
 measurement/blind_outputs/
+measurement/blind_view.md
 *.log
 __pycache__/
 *.pyc

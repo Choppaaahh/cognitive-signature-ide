@@ -27,15 +27,23 @@ python3 skills/extract/extract.py
 # 2. Generate 30 outputs (10 prompts × 3 conditions)
 python3 measurement/blind_test.py
 
-# 3. Score interactively — reads outputs, shuffles per-prompt (deterministic seed),
-#    asks you to pick yours
-python3 measurement/score.py
+# 3a. View all 10 prompts with shuffled A/B/C outputs, deterministic seed
+python3 measurement/score.py --view
+# → reads measurement/blind_view.md at your own pace
+
+# 3b. Record your picks as a comma-separated string (10 picks, one per prompt)
+python3 measurement/score.py --picks A,C,B,A,B,C,A,C,B,A --seed 42
+# → writes measurement/results.md + results.json
+
+# Alternative: --interactive (TTY only, fails on piped stdin)
+python3 measurement/score.py --interactive
 ```
 
 Output:
-- `measurement/blind_outputs/<prompt-id>/{baseline,placebo,real}.md`
-- `measurement/results.md` — headline + per-prompt picks
-- `measurement/results.json` — machine-readable results
+- `measurement/blind_outputs/<prompt-id>/{baseline,placebo,real}.md` — raw model outputs (gitignored)
+- `measurement/blind_view.md` — shuffled reading view (gitignored — contains your signature signal)
+- `measurement/results.md` — headline + per-prompt picks (SHIPS WITH SUBMISSION)
+- `measurement/results.json` — machine-readable results (SHIPS WITH SUBMISSION)
 
 ## Honest caveats
 
