@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
-# SessionStart hook — load cached signature (Day 3 target)
+# SessionStart hook — emit cogsig status on every session start.
 #
-# On every Claude Code session start, load signature.json (if present)
-# and emit a one-line status so the user knows whether injection is active.
-#
-# Day 1: stub only.
+# Reads stdin JSON from Claude Code (drained but not parsed — status is
+# self-contained). Prints a single status line if a signature exists.
 
 set -euo pipefail
 
 cat >/dev/null
+
+REPO="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+TOGGLE="$REPO/skills/toggle/toggle.py"
+
+if [[ -f "$TOGGLE" ]]; then
+    python3 "$TOGGLE" status --repo "$REPO" 2>/dev/null || true
+fi
 
 exit 0
