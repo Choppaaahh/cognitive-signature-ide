@@ -22,10 +22,10 @@ Claude has access to your files. It can see how you work. The gap is: **nobody's
 
 Four skills, three governance agents, two hooks.
 
-1. **Capture** — sample recent artifacts the user has actually authored
+1. **Capture** — sample recent artifacts the user has actually authored, optionally scoped to a subset of the repo (work-code vs personal-code)
 2. **Extract** — one Opus 4.7 call produces a structured `signature.json`
-3. **Inject** — prepend the signature to Claude's context so suggestions match the user's voice
-4. **Toggle** — `/cogsig on | off | diff` — flip it live, compare mine/theirs/generic side-by-side
+3. **Inject** — prepend the active signature to Claude's context so suggestions match the user's voice
+4. **Toggle** — `/cogsig on | off | status | scope <name> | export | import | diff` — flip it live, switch between signatures, share signatures across teammates
 
 ### Why the architecture matters more than the dimensions
 
@@ -43,9 +43,38 @@ These run as **Claude Managed Agents** (cloud-hosted, `managed-agents-2026-04-01
 
 The pipeline is one. The signature schema is a parameter. Swap the schema + extraction prompt, point the capture skill at different file types, and the same pipeline extracts a signature for any creative domain. For the hackathon demo, **code is the end-to-end-shipped domain** — naming convention, comment density, function length, error handling, import organization, structural preference. Writing and design signatures are schema-swaps, not re-architectures. That work lives in **Future Directions** below — intentionally out of scope here so the demo delivers one domain deeply, not three shallowly.
 
+### Per-project signatures
+
+One developer writes different code in different contexts. Work-repo code looks nothing like personal-hobby code — different naming, different error handling, different comment density. A single signature averaged across both is worse than useless; it makes suggestions that match neither.
+
+The capture skill takes an optional `--scope-name` label and `--include` / `--exclude` path filters. The toggle skill tracks which scope is active:
+
+```
+/cogsig capture --scope-name work     --include "src/**,lib/**"
+/cogsig capture --scope-name personal --include "sandbox/**"
+/cogsig extract --scope-name work
+/cogsig extract --scope-name personal
+/cogsig scope work        → inject uses signature.work.json
+/cogsig scope personal    → inject uses signature.personal.json
+/cogsig scope list        → all available signatures
+```
+
+Scope switching is observable: a `/cogsig status` call shows exactly which signature is active and the samples it came from.
+
+### Sharing signatures across a team
+
+`signature.json` is deliberately not something you commit. It's user-specific, `.gitignore`'d, and personal. But a team that wants consistency — everyone's code matching a shared house style — can export and import signatures without leaking code:
+
+```
+/cogsig export --team-id alpha-team     → writes signature.export-alpha-team.json
+<teammate>: /cogsig import signature.export-alpha-team.json
+```
+
+The imported signature lands with `origin: "imported"` in the JSON. Signature-Historian reads that field and skips drift-analysis automatically, because drift against an imported reference point is expected behavior, not a bug.
+
 ### Live-signature-update (the demo moment)
 
-A `PostToolUse` hook watches your edits during the session. As you write code, the signature JSON updates in real time. The demo video shows the signature mutating as artifacts get produced — a visible, visceral "the plugin is learning you" moment.
+A `PostToolUse` hook watches your edits during the session. As you write code, the active signature JSON updates in real time. The demo video shows the signature mutating as artifacts get produced — a visible, visceral "the plugin is learning you" moment.
 
 ### On the lived basis
 
@@ -95,12 +124,10 @@ A pre-submission blind test: 10 prompts, Claude answers each under three conditi
 
 ## Future directions (out of scope for submission)
 
-- **Writing domain** — sentence length, tonal register, paragraph cadence, idiomatic tells. Schema-swap, same pipeline.
-- **Design domain** — palette preference, spacing density, component composition. Same pipeline, non-code capture layer.
-- **Multi-signature switching** — per-project signatures (work vs personal repos)
-- **Signature export/import** — team-level style sharing without code sharing
+- **Writing domain** — sentence length, tonal register, paragraph cadence, idiomatic tells. Schema-swap, same pipeline. Validation is subjective enough to warrant its own post-hackathon iteration.
+- **Design domain** — palette preference, spacing density, component composition. Needs a non-code capture layer (Figma API or CSS/HTML sampling). Post-hackathon.
 
-These are architecture-supported but deliberately not implemented for the hackathon. One domain shipped deeply beats three shipped shallowly.
+These are architecture-supported but deliberately not shipped for the submission. One domain shipped deeply beats three shipped shallowly.
 
 ## License
 

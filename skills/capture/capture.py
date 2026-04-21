@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
 """capture — sample recent code the user has authored.
 
-Outputs `.signature-cache/samples.json` in the repo root. Consumed by `extract`.
+Outputs `.signature-cache/samples[.<scope>].json` in the repo root.
+Consumed by `extract`.
+
+Scope support: a signature can be captured for a subset of the repo
+(e.g. --scope-name work --include "src/**,lib/**" --exclude "tests/**")
+so a single user can maintain distinct signatures for work vs personal
+code without cross-contamination.
 
 Usage:
-    python3 skills/capture/capture.py [--repo PATH] [--max-samples N] [--max-chars N]
+    python3 skills/capture/capture.py [--repo PATH] [--scope-name NAME]
+                                       [--include PATTERNS] [--exclude PATTERNS]
+                                       [--max-samples N] [--max-chars N]
 """
 
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import subprocess
@@ -114,6 +123,15 @@ def is_code_file(rel_path: str) -> tuple[bool, str]:
     return (lang is not None), (lang or "")
 
 
+def match_scope(rel_path: str, includes: list[str], excludes: list[str]) -> bool:
+    for pattern in excludes:
+        if fnmatch.fnmatch(rel_path, pattern):
+            return False
+    if not includes:
+        return True
+    return any(fnmatch.fnmatch(rel_path, pattern) for pattern in includes)
+
+
 def load_sample(repo: Path, rel_path: str, max_chars: int) -> Sample | None:
     ok, lang = is_code_file(rel_path)
     if not ok:
@@ -132,7 +150,17 @@ def load_sample(repo: Path, rel_path: str, max_chars: int) -> Sample | None:
     return Sample(path=rel_path, language=lang, content=truncated, line_count=line_count)
 
 
-def capture(repo: Path, max_samples: int = 20, max_chars: int = 4000) -> dict:
+def capture(
+    repo: Path,
+    scope_name: str = "default",
+    includes: list[str] | None = None,
+    excludes: list[str] | None = None,
+    max_samples: int = 20,
+    max_chars: int = 4000,
+) -> dict:
+    includes = includes or []
+    excludes = excludes or []
+
     email = git_user_email(repo)
     if not email:
         print("warn: no git user.email set, falling back to recent working files only", file=sys.stderr)
@@ -146,6 +174,8 @@ def capture(repo: Path, max_samples: int = 20, max_chars: int = 4000) -> dict:
     for rel_path in candidates:
         if len(samples) >= max_samples:
             break
+        if not match_scope(rel_path, includes, excludes):
+            continue
         sample = load_sample(repo, rel_path, max_chars)
         if sample:
             samples.append(sample)
@@ -155,6 +185,9 @@ def capture(repo: Path, max_samples: int = 20, max_chars: int = 4000) -> dict:
         "captured_ts": datetime.now(timezone.utc).isoformat(),
         "repo_path": str(repo),
         "git_email": email,
+        "scope": scope_name,
+        "scope_includes": includes,
+        "scope_excludes": excludes,
         "sample_count": len(samples),
         "languages": languages,
         "samples": [asdict(s) for s in samples],
@@ -162,12 +195,38 @@ def capture(repo: Path, max_samples: int = 20, max_chars: int = 4000) -> dict:
     return output
 
 
+def samples_path_for_scope(repo: Path, scope_name: str) -> Path:
+    filename = "samples.json" if scope_name == "default" else f"samples.{scope_name}.json"
+    return repo / ".signature-cache" / filename
+
+
+def parse_patterns(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    return [p.strip() for p in raw.split(",") if p.strip()]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Sample recent code the user has authored.")
     ap.add_argument("--repo", type=Path, default=Path.cwd(), help="Repo root (default: cwd)")
+    ap.add_argument(
+        "--scope-name",
+        default="default",
+        help="Signature scope label (default: 'default'). Use for multi-sig (work / personal).",
+    )
+    ap.add_argument(
+        "--include",
+        default=None,
+        help="Comma-separated fnmatch patterns to include (e.g. 'src/**,lib/**')",
+    )
+    ap.add_argument(
+        "--exclude",
+        default=None,
+        help="Comma-separated fnmatch patterns to exclude (e.g. 'tests/**,docs/**')",
+    )
     ap.add_argument("--max-samples", type=int, default=20)
     ap.add_argument("--max-chars", type=int, default=4000)
-    ap.add_argument("--out", type=Path, default=None, help="Output path (default: <repo>/.signature-cache/samples.json)")
+    ap.add_argument("--out", type=Path, default=None, help="Override output path")
     args = ap.parse_args()
 
     repo = args.repo.resolve()
@@ -175,13 +234,27 @@ def main() -> int:
         print(f"error: {repo} is not a git repo", file=sys.stderr)
         return 1
 
-    out_path = args.out or (repo / ".signature-cache" / "samples.json")
+    includes = parse_patterns(args.include)
+    excludes = parse_patterns(args.exclude)
+    out_path = args.out or samples_path_for_scope(repo, args.scope_name)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    result = capture(repo, max_samples=args.max_samples, max_chars=args.max_chars)
+    result = capture(
+        repo,
+        scope_name=args.scope_name,
+        includes=includes,
+        excludes=excludes,
+        max_samples=args.max_samples,
+        max_chars=args.max_chars,
+    )
     out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
 
-    print(f"captured {result['sample_count']} samples across {len(result['languages'])} languages: {', '.join(result['languages'])}")
+    scope_tag = "" if args.scope_name == "default" else f" [scope: {args.scope_name}]"
+    print(f"captured {result['sample_count']} samples across {len(result['languages'])} languages: {', '.join(result['languages'])}{scope_tag}")
+    if includes:
+        print(f"  include: {', '.join(includes)}")
+    if excludes:
+        print(f"  exclude: {', '.join(excludes)}")
     print(f"wrote {out_path}")
     return 0
 

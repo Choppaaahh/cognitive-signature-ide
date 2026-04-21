@@ -61,14 +61,21 @@ def render_signature_prefix(signature_path: Path) -> str | None:
     )
 
 
-def is_enabled(state_path: Path) -> bool:
+def load_state(state_path: Path) -> dict:
     if not state_path.exists():
-        return True
+        return {"enabled": True, "active_scope": "default"}
     try:
         state = json.loads(state_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return True
-    return bool(state.get("enabled", True))
+        return {"enabled": True, "active_scope": "default"}
+    state.setdefault("enabled", True)
+    state.setdefault("active_scope", "default")
+    return state
+
+
+def signature_path_for_scope(repo: Path, scope_name: str) -> Path:
+    filename = "signature.json" if scope_name == "default" else f"signature.{scope_name}.json"
+    return repo / filename
 
 
 def main() -> int:
@@ -76,14 +83,17 @@ def main() -> int:
     ap.add_argument("--repo", type=Path, default=Path.cwd())
     ap.add_argument("--signature", type=Path, default=None)
     ap.add_argument("--state", type=Path, default=None)
+    ap.add_argument("--scope-name", default=None, help="Override active scope from state")
     ap.add_argument("--force", action="store_true", help="Emit prefix even when toggle is OFF")
     args = ap.parse_args()
 
     repo = args.repo.resolve()
-    signature_path = args.signature or (repo / "signature.json")
     state_path = args.state or (repo / ".signature-cache" / "state.json")
+    state = load_state(state_path)
+    scope = args.scope_name or state["active_scope"]
+    signature_path = args.signature or signature_path_for_scope(repo, scope)
 
-    if not args.force and not is_enabled(state_path):
+    if not args.force and not state["enabled"]:
         print("# signature injection is OFF — run /cogsig on to enable", file=sys.stderr)
         return 0
 

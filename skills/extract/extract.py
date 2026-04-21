@@ -108,20 +108,31 @@ def validate(signature: dict, schema_path: Path) -> list[str]:
     return errors
 
 
+def samples_path_for_scope(repo: Path, scope_name: str) -> Path:
+    filename = "samples.json" if scope_name == "default" else f"samples.{scope_name}.json"
+    return repo / ".signature-cache" / filename
+
+
+def signature_path_for_scope(repo: Path, scope_name: str) -> Path:
+    filename = "signature.json" if scope_name == "default" else f"signature.{scope_name}.json"
+    return repo / filename
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Call Opus 4.7 on samples → signature.json")
     ap.add_argument("--repo", type=Path, default=Path.cwd())
     ap.add_argument("--model", default=MODEL_DEFAULT)
+    ap.add_argument("--scope-name", default="default", help="Signature scope label")
     ap.add_argument("--samples", type=Path, default=None)
     ap.add_argument("--schema", type=Path, default=None)
     ap.add_argument("--out", type=Path, default=None)
     args = ap.parse_args()
 
     repo = args.repo.resolve()
-    samples_path = args.samples or (repo / ".signature-cache" / "samples.json")
+    samples_path = args.samples or samples_path_for_scope(repo, args.scope_name)
     schema_path = args.schema or (repo / "skills" / "extract" / "signature_schema.json")
-    out_path = args.out or (repo / "signature.json")
-    history_path = repo / ".signature-cache" / "signature_history.jsonl"
+    out_path = args.out or signature_path_for_scope(repo, args.scope_name)
+    history_path = repo / ".signature-cache" / ("signature_history.jsonl" if args.scope_name == "default" else f"signature_history.{args.scope_name}.jsonl")
 
     if not samples_path.exists():
         print(f"error: {samples_path} missing — run capture first", file=sys.stderr)
@@ -131,6 +142,8 @@ def main() -> int:
         return 1
 
     signature = extract(samples_path, schema_path, args.model)
+    if args.scope_name != "default":
+        signature["scope"] = args.scope_name
     errors = validate(signature, schema_path)
     if errors:
         print("validation errors:", file=sys.stderr)
