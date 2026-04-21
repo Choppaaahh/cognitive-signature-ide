@@ -1,0 +1,46 @@
+{
+  "version": "0.1",
+  "description": "10 coding prompts for the cogsig blind test. Each asks for a small self-contained function/class that gives signature dimensions a chance to surface (naming, comments, error handling, structure).",
+  "prompts": [
+    {
+      "id": "dedupe-ordered",
+      "prompt": "Write a function that deduplicates a list while preserving order. Include a docstring and handle the empty-list case."
+    },
+    {
+      "id": "lru-cache",
+      "prompt": "Implement an LRU cache class with get(key) and put(key, value) methods and a configurable capacity. Evict the least recently used entry when full."
+    },
+    {
+      "id": "csv-parse",
+      "prompt": "Read a CSV file and return a list of dicts keyed by the header row. Handle file-not-found and malformed rows."
+    },
+    {
+      "id": "timed-decorator",
+      "prompt": "Write a decorator that times function execution and prints the elapsed seconds, preserving the wrapped function's name and docstring."
+    },
+    {
+      "id": "dir-walker",
+      "prompt": "Walk a directory recursively and return all files whose names match a given glob pattern (e.g. '*.py'). Use only the standard library."
+    },
+    {
+      "id": "sort-dicts",
+      "prompt": "Sort a list of dicts by a primary key, with a secondary key as tiebreaker. Ascending for both. Handle missing keys gracefully."
+    },
+    {
+      "id": "parallel-fetch",
+      "prompt": "Fetch three URLs in parallel and return their response bodies as a list (same order as input). Handle errors per-URL without failing the whole batch."
+    },
+    {
+      "id": "date-normalize",
+      "prompt": "Given a list of date strings in mixed formats ('2026-04-21', '04/21/2026', '21 Apr 2026'), parse each to a date object. Raise a specific exception for unparseable entries."
+    },
+    {
+      "id": "phone-validate",
+      "prompt": "Validate a US phone number string. Accept formats like '(555) 123-4567', '555-123-4567', '5551234567'. Return True/False."
+    },
+    {
+      "id": "retry-with-backoff",
+      "prompt": "Write a function that retries a callable up to N times with exponential backoff. The callable raises on failure."
+    }
+  ]
+}

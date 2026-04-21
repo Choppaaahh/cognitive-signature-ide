@@ -1,7 +1,9 @@
 signature.json
 signature.*.json
 signature_history.jsonl
+signature_export*.json
 .signature-cache/
+measurement/blind_outputs/
 *.log
 __pycache__/
 *.pyc
