@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Cognitive Signature — Code Domain v0.1",
+  "description": "Structured output of a user's coding signature across 6 dimensions, produced by the extract skill.",
+  "type": "object",
+  "required": [
+    "version",
+    "generated_ts",
+    "domain",
+    "sample_count",
+    "languages",
+    "dimensions"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Signature schema version, currently 0.1"
+    },
+    "generated_ts": {
+      "type": "string",
+      "description": "ISO 8601 UTC timestamp of extraction"
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["code", "writing", "design"],
+      "description": "Which creative domain the signature describes"
+    },
+    "sample_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of samples analyzed"
+    },
+    "languages": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Programming languages observed in samples"
+    },
+    "dimensions": {
+      "type": "object",
+      "required": [
+        "naming_convention",
+        "comment_density",
+        "function_length",
+        "error_handling",
+        "import_organization",
+        "structural_preference"
+      ],
+      "properties": {
+        "naming_convention": {
+          "type": "object",
+          "required": ["primary_style", "confidence", "evidence"],
+          "properties": {
+            "primary_style": {
+              "type": "string",
+              "enum": ["snake_case", "camelCase", "PascalCase", "kebab-case", "mixed"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "evidence": { "type": "string" }
+          }
+        },
+        "comment_density": {
+          "type": "object",
+          "required": ["comments_per_100_lines", "docstring_presence", "style", "confidence"],
+          "properties": {
+            "comments_per_100_lines": { "type": "number", "minimum": 0 },
+            "docstring_presence": {
+              "type": "string",
+              "enum": ["always", "sometimes", "rare", "never"]
+            },
+            "style": {
+              "type": "string",
+              "enum": ["inline", "block", "mixed", "none"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "function_length": {
+          "type": "object",
+          "required": ["p50_lines", "p90_lines", "max_observed", "preference", "confidence"],
+          "properties": {
+            "p50_lines": { "type": "integer", "minimum": 0 },
+            "p90_lines": { "type": "integer", "minimum": 0 },
+            "max_observed": { "type": "integer", "minimum": 0 },
+            "preference": {
+              "type": "string",
+              "enum": ["terse", "moderate", "verbose"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "error_handling": {
+          "type": "object",
+          "required": ["try_except_style", "validation_pattern", "bare_except_tolerance", "confidence"],
+          "properties": {
+            "try_except_style": {
+              "type": "string",
+              "enum": ["specific", "broad", "mixed", "avoided"]
+            },
+            "validation_pattern": {
+              "type": "string",
+              "enum": ["guard-clause", "deep-check", "trust-inputs", "mixed"]
+            },
+            "bare_except_tolerance": {
+              "type": "string",
+              "enum": ["never", "rare", "accepted"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "import_organization": {
+          "type": "object",
+          "required": ["grouping", "aliasing_style", "confidence"],
+          "properties": {
+            "grouping": {
+              "type": "string",
+              "enum": ["stdlib-third-party-local", "alphabetical", "mixed", "none"]
+            },
+            "aliasing_style": {
+              "type": "string",
+              "enum": ["always", "function-only", "rare", "never"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "structural_preference": {
+          "type": "object",
+          "required": ["nesting_depth", "early_return_pattern", "helper_extraction", "confidence"],
+          "properties": {
+            "nesting_depth": {
+              "type": "string",
+              "enum": ["flat", "moderate", "deep"]
+            },
+            "early_return_pattern": {
+              "type": "string",
+              "enum": ["preferred", "mixed", "avoided"]
+            },
+            "helper_extraction": {
+              "type": "string",
+              "enum": ["aggressive", "moderate", "inline-everything"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional free-form observations from the extractor"
+    }
+  }
+}
