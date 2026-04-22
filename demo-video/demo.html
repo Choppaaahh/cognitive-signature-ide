@@ -807,95 +807,74 @@
     opacity: 0;
   }
 
-  /* --- BUILDER ENDER (full-rainbow edition) --- */
+  /* --- BUILDER ENDER (subtle paper-cream + rainbow "vibecoded" only) --- */
   .builder-card {
-    margin-top: 26px;
-    background: #1a1410;
-    border: 1.5px solid transparent;
-    border-radius: 12px;
-    padding: 20px 28px;
-    max-width: 860px;
+    margin-top: 22px;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 20px 30px;
+    max-width: 880px;
     width: 100%;
-    font-size: 13.5px;
-    line-height: 1.65;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink-soft);
     opacity: 0;
     transform: translateY(12px);
     text-align: center;
-    position: relative;
-    background-image:
-      linear-gradient(#1a1410, #1a1410),
-      linear-gradient(90deg,
-        #E5564A 0%, #E5A84A 14%, #D4A541 28%,
-        #5E7A52 42%, #5577B8 56%, #8E5EB8 70%,
-        #C15F3C 85%, #E5564A 100%);
-    background-origin: border-box;
-    background-clip: content-box, border-box;
-    background-size: 100%, 300% 100%;
-    animation: rainbow-border 4s linear infinite;
   }
-  @keyframes rainbow-border {
-    0%   { background-position: 0 0, 0% 50%; }
-    100% { background-position: 0 0, 300% 50%; }
-  }
-
-  .rainbow,
-  .builder-card .builder-eyebrow,
-  .builder-card .who,
-  .builder-card .tag,
-  .builder-card .builder-disclaimer,
-  .builder-card .builder-thanks {
-    background: linear-gradient(90deg,
-      #FF6B5E 0%, #FFB367 14%, #F0C860 28%,
-      #7FA873 42%, #6E95D1 56%, #A977CF 70%,
-      #E07A52 85%, #FF6B5E 100%);
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    animation: rainbow-shift 4s linear infinite;
-  }
-  @keyframes rainbow-shift {
-    0%   { background-position: 0% 50%; }
-    100% { background-position: 300% 50%; }
-  }
-
   .builder-eyebrow {
     font-size: 10.5px;
     letter-spacing: 0.3em;
     font-weight: 700;
+    color: var(--amber);
     margin-bottom: 10px;
   }
   .builder-body .who {
     font-family: 'Lora', Georgia, serif;
     font-style: italic;
     font-size: 16px;
+    color: var(--ink);
     font-weight: 500;
     margin-bottom: 4px;
   }
   .builder-body .tag {
-    font-size: 12.5px;
-    font-weight: 500;
+    color: var(--muted);
+    font-size: 13px;
   }
   .builder-disclaimer {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed rgba(255,255,255,0.15);
+    margin-top: 11px;
+    padding-top: 11px;
+    border-top: 1px dashed var(--rule);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
     line-height: 1.55;
-    font-weight: 500;
   }
   .builder-thanks {
-    margin-top: 8px;
+    margin-top: 9px;
     font-size: 12px;
+    color: var(--sage);
     font-style: italic;
-    font-weight: 500;
   }
-  /* keep the original .rainbow class working standalone too */
   .rainbow {
+    background: linear-gradient(90deg,
+      #E5564A 0%, #E5A84A 14%, #D4A541 28%,
+      #5E7A52 42%, #5577B8 56%, #8E5EB8 70%,
+      #C15F3C 85%, #E5564A 100%);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
     font-weight: 800;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
+    animation: rainbow-shift 3.5s linear infinite;
+    padding: 0 2px;
+  }
+  @keyframes rainbow-shift {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
   }
 
   /* --- universal state animators --- */
@@ -1179,33 +1158,36 @@
       <a href="https://github.com/Choppaaahh/cognitive-signature-ide">github.com/Choppaaahh/cognitive-signature-ide</a>
     </p>
     <p class="close-badge" id="b4-badge">BUILT WITH OPUS 4.7 · MIT · 3 DEPLOY MODES</p>
+  </div>
 
-    <div class="samples-eyebrow" id="b4-s-eye">MORE FROM MY SIGNATURE · ACROSS PROJECTS</div>
-    <p class="samples-title" id="b4-s-title">A few patterns CogSig has already captured.</p>
-    <div class="samples-grid" id="b4-s-grid">
-      <div class="sample-card" id="b4-sample-1">
+  <!-- BEAT 5: ENDER (samples + builder) -->
+  <div class="beat" id="beat5">
+    <div class="samples-eyebrow" id="b5-s-eye">MORE FROM MY SIGNATURE · ACROSS PROJECTS</div>
+    <p class="samples-title" id="b5-s-title">A few patterns CogSig has already captured.</p>
+    <div class="samples-grid" id="b5-s-grid">
+      <div class="sample-card" id="b5-sample-1">
         <div class="sample-dim">RECURRING_FAILURE_PATTERNS</div>
         <div class="sample-pat">Editing config without grepping all consumers first.</div>
         <div class="sample-ev">4 instances · caught 2 silent prod bugs</div>
       </div>
-      <div class="sample-card" id="b4-sample-2">
+      <div class="sample-card" id="b5-sample-2">
         <div class="sample-dim">RECURRING_DECISION_TEMPLATES</div>
         <div class="sample-pat">Dispatch bounded single-action to agents; team-lead chains between.</div>
         <div class="sample-ev">13+ dispatches · bounded scope preserved</div>
       </div>
-      <div class="sample-card" id="b4-sample-3">
+      <div class="sample-card" id="b5-sample-3">
         <div class="sample-dim">RECURRING_TOOLING_INVOCATIONS</div>
         <div class="sample-pat">Run vault_search before answering substantive questions.</div>
         <div class="sample-ev">dynamic retrieval validated +67% over naked</div>
       </div>
-      <div class="sample-card" id="b4-sample-4">
+      <div class="sample-card" id="b5-sample-4">
         <div class="sample-dim">VOCABULARY_ANCHORS</div>
         <div class="sample-pat">"cook it" / "run it" / "ship it" = explicit proceed authorization.</div>
         <div class="sample-ev">learned trust signal · hands-off trigger</div>
       </div>
     </div>
 
-    <div class="builder-card" id="b4-builder">
+    <div class="builder-card" id="b5-builder">
       <div class="builder-eyebrow">ABOUT THE BUILDER</div>
       <div class="builder-body">
         <div class="who">Choppaa — non-technical independent researcher</div>
@@ -1358,7 +1340,7 @@ const TIMELINE = [
   { t: 111.0, fn: () => renderGrid() },
   { t: 124.0, fn: () => fade('b3-footer') },
 
-  // --- BEAT 4: CLOSE + SAMPLES + BUILDER (127 - 167s) ---
+  // --- BEAT 4: MAIN CLOSE (127 - 150s) ---
   { t: 126.5, fn: () => deactivate('beat3') },
   { t: 127.5, fn: () => activate('beat4') },
   { t: 128.0, fn: () => fade('b4-eyebrow') },
@@ -1368,18 +1350,20 @@ const TIMELINE = [
   { t: 141.5, fn: () => rise('b4-tag') },
   { t: 144.0, fn: () => fade('b4-url') },
   { t: 145.5, fn: () => fade('b4-badge') },
-  // Sample patterns (more from my signature)
-  { t: 147.0, fn: () => fade('b4-s-eye') },
-  { t: 148.0, fn: () => fade('b4-s-title') },
-  { t: 149.0, fn: () => rise('b4-sample-1') },
-  { t: 149.7, fn: () => rise('b4-sample-2') },
-  { t: 150.4, fn: () => rise('b4-sample-3') },
-  { t: 151.1, fn: () => rise('b4-sample-4') },
-  // Builder card (full-rainbow)
-  { t: 154.5, fn: () => rise('b4-builder') },
-  { t: 165.0, fn: () => document.getElementById('replay').classList.add('shown') }
+
+  // --- BEAT 5: ENDER (samples + builder) (150 - 175s) ---
+  { t: 149.5, fn: () => deactivate('beat4') },
+  { t: 150.5, fn: () => activate('beat5') },
+  { t: 151.0, fn: () => fade('b5-s-eye') },
+  { t: 152.0, fn: () => fade('b5-s-title') },
+  { t: 153.0, fn: () => rise('b5-sample-1') },
+  { t: 153.7, fn: () => rise('b5-sample-2') },
+  { t: 154.4, fn: () => rise('b5-sample-3') },
+  { t: 155.1, fn: () => rise('b5-sample-4') },
+  { t: 158.5, fn: () => rise('b5-builder') },
+  { t: 172.0, fn: () => document.getElementById('replay').classList.add('shown') }
 ];
-const TOTAL = 167;
+const TOTAL = 175;
 
 /* ------------------------------------------------------------------
    Helpers
