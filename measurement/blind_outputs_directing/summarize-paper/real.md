@@ -1,1 +1,0 @@
-"Attention Is All You Need" ditched recurrence entirely and showed self-attention alone can do the heavy lifting — which scales way better than RNNs. That paper is the backbone of basically everything now: GPT, BERT, all the modern LLMs trace back to it.
