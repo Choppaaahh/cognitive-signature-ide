@@ -6,7 +6,7 @@ Claude Managed Agents (public beta, header `managed-agents-2026-04-01`).
 ## Why cloud-hosted
 
 - **Independent review** — governance agents don't share the user's working-context bias
-- **Persistent history** — Signature-Historian can track drift across machines
+- **Persistent history** — the historian agent can track drift across machines
 - **Dogfood signal** — the plugin exercises Anthropic's own multi-agent infrastructure on the layer that most benefits from it
 
 ## What's here

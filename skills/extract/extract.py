@@ -280,7 +280,7 @@ def main() -> int:
         print("validation errors:", file=sys.stderr)
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
-        print("(signature still written; route to Signature-QA for review)", file=sys.stderr)
+        print("(signature still written; route to qa subagent for review)", file=sys.stderr)
 
     advisor_report = None
     if args.advisor != "off":

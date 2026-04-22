@@ -147,7 +147,7 @@ def main() -> int:
         print("\ncogsig init: how do you want CogSig to work?\n")
         print("  [1] normie — hands-off, auto-promote patterns silently at n=2")
         print("  [2] power  — review-before-promote, you approve/reject new patterns (default)")
-        print("  [3] team   — option 2 + team-lead audit trail + Signature-Brutus/QA/Historian governance")
+        print("  [3] team   — option 2 + team-lead audit trail + brutus/qa/historian governance subagents")
         print("  [4] enterprise — option 3 + Claude Managed Agents (cloud-governed, audit log)")
         print()
         try:

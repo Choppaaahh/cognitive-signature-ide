@@ -178,7 +178,7 @@ def cmd_mode(repo: Path, rest: list[str]) -> int:
 def _print_mode_description(mode: str, indent: str = "  ") -> None:
     descriptions = {
         "standalone": "direct API call, no governance agents — fastest, cheapest, normies/casual users",
-        "team": "in-session Claude Code sub-agents via /team (Signature-Brutus/QA/Historian) — power users, small teams",
+        "team": "in-session Claude Code subagents (brutus / qa / historian, dual-function) — power users, small teams",
         "cloud": "Claude Managed Agents beta (managed-agents-2026-04-01) — enterprise, audit trail, cross-device sync",
     }
     desc = descriptions.get(mode)
