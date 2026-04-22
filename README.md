@@ -36,28 +36,34 @@ Extracted from raw user-typed directives across your Claude Code session history
 
 **Status**: shipped and live-verified. 100% auto-scorer accuracy (see *Measurement*).
 
-### Functionality 2 — Operational patterns (failure modes, reasoning chains, recurring decisions)
+### Functionality 2 — Operational patterns (decision templates, failure patterns, tooling invocations, vocabulary anchors)
 
-What you've learned through usage. The architecture is **pattern-agnostic** — anything you can schema + extract + review + inject can be promoted into the permanent signature:
+What you've learned through usage. Captured from the same dialogue corpus as voice, but with a different lens: RECURRING CONTENT patterns rather than stylistic features.
 
-- **Bug patterns** — failure modes your sessions repeatedly hit; after `n=2` repetitions, Claude proactively checks for them before shipping.
-- **Reasoning-chain patterns** — how you decompose problems across turns; Claude anticipates the next step rather than waiting for steering.
-- **Domain-specific patterns** — accounting vocabulary, engineering rigor, legal precision, customer-support warmth. Multiple scopes per user, each with its own pattern stack. `/cogsig scope <domain>`.
-- **Cross-team patterns** — when the same pattern promotes across multiple teammates' imports, it becomes a team-scope pattern; the shared signature captures what the team learned collectively.
+Four dimensions in the shipped schema (v0.2 after adversarial review):
+
+- **recurring_decision_templates** — situation → response mappings. "When facing X, user does Y." Decision shapes the user has converged on through usage.
+- **recurring_failure_patterns** — known failure modes the user has encountered and now proactively checks for or flags.
+- **recurring_tooling_invocations** — named tools/commands/flags the user invokes repeatedly in specific contexts.
+- **vocabulary_anchors** — project-specific terminology, domain vocabulary, recurring named entities. Distinct from voice's idiomatic_tells — this is content-bearing, not stylistic.
+
+Every item requires `instance_count` + `evidence_list` of actual direct quotes. No frequency-enum handwaving; objective defensible counting.
 
 Governance-promoted-only: every pattern passes Brutus (adversarial) + QA (schema) + Historian (drift) before entering the permanent signature. Hallucinated patterns don't stick.
 
-**Status**: architecture-supported; directing-signature (Functionality 1) is the first pattern class shipped; bug/reasoning/domain/team classes use the same pipeline as natural extensions with usage.
+**Status**: **live-shipped**. `/cogsig init` extracts BOTH voice and operational signatures by default in one command. Same pipeline, different extraction lens on the same corpus. Architecture extends naturally to additional pattern classes (bug patterns as typed sub-class of failure_patterns, reasoning-chain patterns, domain-specific patterns, cross-team patterns) as usage corpus grows.
 
 ### The same `capture → extract → govern → inject` pipeline, both layers
 
 ```
-your Claude Code sessions  →  filter type:user messages  →  Opus 4.7 extracts signature  →
-                              governance agents review  →  signature.json  →
+your Claude Code sessions  →  filter type:user messages  →  Opus 4.7 extracts:
+                                 - voice signature (directing domain, 7 dims)
+                                 - operational signature (operational domain, 4 dims)
+                              governance agents review both  →  signature.json + signature.operational.json  →
                               injected into Claude's response context from this moment on
 ```
 
-Same pipes, two layers of signal. **On install, your voice signature seeds instantly from your existing Claude Code history** — alignment from minute one, no warm-up period. Over weeks, both layers refine and deepen: new vocabulary absorbs, operational patterns promote through governance, drift gets caught, the cognitive-scaffolding layer thickens. Claude syncs continuously.
+Same pipes, two layers of signal, **both extracted in one command** (`/cogsig init` default). On install, both signatures seed instantly from your existing Claude Code history — alignment from minute one, no warm-up period. Over weeks, both layers refine and deepen: new vocabulary absorbs, operational patterns promote through governance, drift gets caught, the cognitive-scaffolding layer thickens. Claude syncs continuously.
 
 ---
 
