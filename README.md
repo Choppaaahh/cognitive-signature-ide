@@ -86,12 +86,12 @@ The governance layer is the product. Most of the time you don't see it working. 
 
 ---
 
-## 3 user types × 3 governance deploy modes
+## 3 governance tiers × 4 onboarding presets
 
 | User type | Governance infrastructure | Interaction posture |
 |-----------|---------------------------|---------------------|
 | **Solo / normie** | Standalone — direct API call, inline | Turn on, forget. Advisor fires invisibly. |
-| **Power user / team (3-10)** | In-session agents — Signature-Brutus/QA/Historian spawn via `/team` | Interactive governance available; team signatures exportable |
+| **Power user / team (3-10)** | In-session agents — `brutus` / `qa` / `historian` available at the prompt via `@agent-` mention | Interactive governance available; team signatures exportable |
 | **Enterprise** | Cloud-governed — Claude Managed Agents (beta `managed-agents-2026-04-01`) | Compliance + audit + cross-device sync |
 
 Same pipeline. Same tagline. Three governance infrastructures, one choice:
@@ -196,13 +196,17 @@ Signature extraction is subjective. A single Opus call can hallucinate traits, o
 
 ### Summoning the agents (general-purpose mode)
 
-At your Claude Code prompt:
+At your Claude Code prompt, use the `@agent-<plugin>:<name>` form for unambiguous routing:
 ```
-brutus review this function for silent-failure paths
-qa compile-check all 3 files I just edited
-historian compare this config to last 5 sessions
+@agent-cognitive-signature-ide:brutus review this function for silent-failure paths
+@agent-cognitive-signature-ide:qa compile-check all 3 files I just edited
+@agent-cognitive-signature-ide:historian compare this config to last 5 sessions
 ```
-The agents are registered at plugin install — no additional setup. Each reads its own invocation context and picks the correct function (signature-mode vs general-mode). The signature-governance pathway still fires automatically from the CogSig pipeline; the general-purpose pathway is user-invoked.
+If no other agents share the short names, `@agent-brutus` / `@agent-qa` / `@agent-historian` also work. Bare prose like "brutus, review this" will sometimes route and sometimes not — the `@agent-` prefix is the guaranteed dispatch.
+
+**Agent function selection is prompt-driven**, not mechanical. The CogSig pipeline issues dispatch prompts that explicitly reference `signature.json` / `samples.json` → the agent uses its Function 1 output format. User-summoned invocations that don't mention signature artifacts → Function 2 output format. No runtime switch; the model reads the invocation context.
+
+**Priority / shadowing caveat.** Claude Code loads agents in this priority order: user-level (`~/.claude/agents/`) > project-level (`.claude/agents/`) > plugin-contributed (lowest). If you already have a `brutus` / `qa` / `historian` agent at a higher level, the plugin version is shadowed. Use the scoped `@agent-cognitive-signature-ide:brutus` form to force-invoke the plugin version.
 
 **The architecture we used to build this plugin is the architecture we ship.** Every fix we applied pre-submission went through the same brutus+qa loop that's now installed on your machine.
 

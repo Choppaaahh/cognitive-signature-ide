@@ -1,7 +1,7 @@
 {
   "name": "cognitive-signature-ide",
   "version": "0.1.0",
-  "description": "Claude quietly syncs to your cognitive signature — voice (directives, conversational flow, idiomatic tells) + operational patterns (failure modes, reasoning chains, recurring decisions) — and stays aligned as you change. Ships 3 dual-function subagents (brutus / qa / historian) invokable for general work, not just signature review.",
+  "description": "Claude quietly syncs to your cognitive signature — voice (directives, conversational flow, idiomatic tells) + operational patterns (failure modes, reasoning chains, recurring decisions) — and stays aligned as you change. Ships 3 subagents (brutus / qa / historian) registered for signature governance and available as general-purpose specialists via @-mention.",
   "author": {
     "name": "Choppa"
   },

@@ -23,21 +23,44 @@ Match this signature when generating code suggestions. Do not default to generic
 conventions if they conflict with the user's established patterns."""
 
 
+_META_KEYS = {"confidence", "evidence", "evidence_list", "instance_count"}
+
+
+def _summarize_value(value: dict) -> str:
+    """Domain-agnostic hint summary — join non-meta scalar/list fields as 'key=val'."""
+    parts = []
+    for k, v in value.items():
+        if k in _META_KEYS:
+            continue
+        if isinstance(v, str) and v:
+            parts.append(f"{k}={v}")
+        elif isinstance(v, (int, float, bool)):
+            parts.append(f"{k}={v}")
+        elif isinstance(v, list) and v:
+            sample = ", ".join(str(x) for x in v[:3])
+            more = f" +{len(v) - 3} more" if len(v) > 3 else ""
+            parts.append(f"{k}=[{sample}{more}]")
+    return "; ".join(parts) if parts else "?"
+
+
 def render_dimensions(dimensions: dict) -> str:
     lines = []
     for name, value in dimensions.items():
         if not isinstance(value, dict):
+            # Operational dims have list-valued entries (e.g. recurring_failure_patterns: [...])
+            if isinstance(value, list) and value:
+                lines.append(f"  - {name}: [{len(value)} entries]")
+                for i, item in enumerate(value[:3]):
+                    if isinstance(item, dict):
+                        label = item.get("situation") or item.get("pattern") or item.get("tool") or item.get("term") or str(item)[:60]
+                        count = item.get("instance_count")
+                        suffix = f" ({count}x)" if count else ""
+                        lines.append(f"      · {str(label)[:80]}{suffix}")
+                if len(value) > 3:
+                    lines.append(f"      ...and {len(value) - 3} more")
             continue
         conf = value.get("confidence", "?")
-        hint = (
-            value.get("primary_style")
-            or value.get("preference")
-            or value.get("try_except_style")
-            or value.get("nesting_depth")
-            or value.get("grouping")
-            or value.get("docstring_presence")
-            or "?"
-        )
+        hint = _summarize_value(value)
         evidence = value.get("evidence", "")
         lines.append(f"  - {name}: {hint} (confidence {conf})")
         if evidence:

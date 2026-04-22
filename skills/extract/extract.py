@@ -256,7 +256,10 @@ def main() -> int:
         schema_name = "signature_schema_operational.json"
     else:
         schema_name = "signature_schema.json"
-    schema_path = args.schema or (repo / "skills" / "extract" / schema_name)
+    # Schema files live next to extract.py (plugin-install dir), not under --repo.
+    # --repo controls WRITE location; schemas are static plugin assets.
+    plugin_extract_dir = Path(__file__).resolve().parent
+    schema_path = args.schema or (plugin_extract_dir / schema_name)
     out_path = args.out or signature_path_for_scope(repo, args.scope_name)
     history_path = repo / ".signature-cache" / ("signature_history.jsonl" if args.scope_name == "default" else f"signature_history.{args.scope_name}.jsonl")
     advisor_dir = repo / ".signature-cache" / "advisor_reports"

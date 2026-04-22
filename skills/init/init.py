@@ -213,8 +213,12 @@ def main() -> int:
         print(f"\n[1/2] aggregated corpus -> {corpus_path}")
 
         repo_path = str(repo)
-        ingest_script = repo / "skills" / "capture" / "dialogue_ingest.py"
-        extract_script = repo / "skills" / "extract" / "extract.py"
+        # Scripts live next to init.py inside the plugin install location — NOT under --repo.
+        # --repo controls where the extracted signature + .signature-cache are WRITTEN,
+        # which may be a different directory from where the plugin is installed.
+        plugin_dir = Path(__file__).resolve().parent.parent.parent
+        ingest_script = plugin_dir / "skills" / "capture" / "dialogue_ingest.py"
+        extract_script = plugin_dir / "skills" / "extract" / "extract.py"
 
         ingest_rc = run_cmd([
             sys.executable, str(ingest_script),
