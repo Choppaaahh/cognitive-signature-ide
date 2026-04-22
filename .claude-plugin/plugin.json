@@ -1,0 +1,33 @@
+{
+  "name": "cognitive-signature-ide",
+  "version": "0.1.0",
+  "description": "Capture your cognitive signature across code, writing, design, any creative domain — and inject it into Claude Code's output so suggestions match your voice instead of a generic one. Multi-agent governance via Managed Agents.",
+  "author": {
+    "name": "Choppa"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Choppaaahh/cognitive-signature-ide",
+  "keywords": [
+    "claude-code",
+    "cognitive-signature",
+    "personalization",
+    "managed-agents",
+    "governance"
+  ],
+  "skills": [
+    "./skills/advisor",
+    "./skills/capture",
+    "./skills/export",
+    "./skills/extract",
+    "./skills/import_sig",
+    "./skills/init",
+    "./skills/inject",
+    "./skills/toggle"
+  ],
+  "agents": [
+    "./agents/signature-brutus.md",
+    "./agents/signature-qa.md",
+    "./agents/signature-historian.md"
+  ],
+  "hooks": "./hooks/hooks.json"
+}

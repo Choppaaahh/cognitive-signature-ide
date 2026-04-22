@@ -1,0 +1,47 @@
+{
+  "version": "0.1",
+  "domain": "directing",
+  "description": "10 dialogue-style prompts for the directing-signature blind test. Each gives Claude an opportunity to match the user's directing register (compression ratio, trust mechanics, reframe patterns, idiomatic tells, iteration cadence, texture energy). Prompts are deliberately open-ended — they invite collaboration rather than a single correct answer, so signature effects surface in how Claude responds, not just what.",
+  "prompts": [
+    {
+      "id": "pivot-reply",
+      "prompt": "draft me a quick reply to the team explaining why we're pivoting the build mid-sprint. 3 sentences max."
+    },
+    {
+      "id": "decide-ab",
+      "prompt": "help me decide: ship the version that works today (90% of target), or spend one more day polishing to hit 100%? deadline is Sunday. what's your call?"
+    },
+    {
+      "id": "summarize-paper",
+      "prompt": "summarize this paper in 2 sentences: 'Attention Is All You Need introduced the Transformer architecture, replacing recurrence with self-attention; the model scales dramatically better than RNNs and became the foundation for GPT, BERT, and most modern LLMs.'"
+    },
+    {
+      "id": "discord-announce",
+      "prompt": "write a Discord message announcing we just shipped the plugin to public repo. channel is #dev. keep it casual, high-energy."
+    },
+    {
+      "id": "critique-plan",
+      "prompt": "here's my plan: build the feature → run 2 users against it → if both like it, ship; if one objects, iterate. what's wrong with this plan?"
+    },
+    {
+      "id": "risks-3",
+      "prompt": "we're launching a hackathon demo video on Sunday. what are the 3 biggest risks and how would you mitigate each?"
+    },
+    {
+      "id": "staged-plan",
+      "prompt": "first tell me what I'm missing about this idea, then if I sign off, propose a 3-step implementation. idea: auto-stub empty function bodies in the codebase with TODO comments when tests require them."
+    },
+    {
+      "id": "walkthrough",
+      "prompt": "walk me through your thinking on this: should we use in-session agents or Managed Agents for governance? pros and cons for each."
+    },
+    {
+      "id": "pushback",
+      "prompt": "I'm going with a mutex lock on the whole function. push back if you see it differently."
+    },
+    {
+      "id": "ship-tonight",
+      "prompt": "I'm thinking we ship this tonight instead of waiting for morning review. what would change your mind?"
+    }
+  ]
+}

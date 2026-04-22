@@ -1,0 +1,1 @@
+"Attention Is All You Need" proposed the Transformer, an architecture that replaces recurrent layers with self-attention to achieve far better scalability than RNNs. It became the foundational design behind modern large language models such as GPT and BERT.

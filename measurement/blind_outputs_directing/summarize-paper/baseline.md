@@ -1,0 +1,1 @@
+The paper "Attention Is All You Need" proposed the Transformer, an architecture that replaces recurrence with self-attention, enabling far better scalability than RNNs. It became the foundational model behind modern large language models like GPT and BERT.
