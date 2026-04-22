@@ -57,7 +57,7 @@ your Claude Code sessions  →  filter type:user messages  →  Opus 4.7 extract
                               injected into Claude's response context from this moment on
 ```
 
-Same pipes, two layers of signal. Over weeks, your signature accrues both — it's not just tone, it's an entire cognitive-scaffolding layer. Claude syncs to that layer continuously.
+Same pipes, two layers of signal. **On install, your voice signature seeds instantly from your existing Claude Code history** — alignment from minute one, no warm-up period. Over weeks, both layers refine and deepen: new vocabulary absorbs, operational patterns promote through governance, drift gets caught, the cognitive-scaffolding layer thickens. Claude syncs continuously.
 
 ---
 
