@@ -1,6 +1,6 @@
 # Cognitive Signature IDE
 
-**Claude quietly syncs to your cognitive signature — voice (directives, conversational flow, idiomatic tells) + operational patterns — and stays aligned as you change.**
+**Claude quietly syncs to your cognitive signature — voice (directives, conversational flow, idiomatic tells) + operational patterns (failure modes, reasoning chains, recurring decisions) — and stays aligned as you change.**
 
 A Claude Code plugin that auto-promotes patterns from how you direct AI and from what you've learned through usage. Two functionalities across one pipeline. Three user types. Hands-off by default; user surfaced only on conflict. Built for the **Built with Opus 4.7** hackathon (Cerebral Valley + Anthropic), April 2026.
 
