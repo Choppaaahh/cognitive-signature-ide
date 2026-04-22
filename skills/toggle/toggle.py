@@ -145,6 +145,7 @@ def cmd_diff(repo: Path, _rest: list[str]) -> int:
 
 def cmd_route(repo: Path, skill: str, rest: list[str]) -> int:
     script_map = {
+        "init": repo / "skills" / "init" / "init.py",
         "capture": repo / "skills" / "capture" / "capture.py",
         "extract": repo / "skills" / "extract" / "extract.py",
         "export": repo / "skills" / "export" / "export.py",
@@ -191,7 +192,7 @@ def main() -> int:
 
     if command in HANDLERS:
         return HANDLERS[command](repo, rest)
-    if command in ("capture", "extract", "export", "import"):
+    if command in ("init", "capture", "extract", "export", "import"):
         return cmd_route(repo, command, rest)
 
     print(f"cogsig: unknown command '{command}'", file=sys.stderr)
