@@ -807,7 +807,7 @@
     opacity: 0;
   }
 
-  /* --- BUILDER ENDER (subtle paper-cream + rainbow "vibecoded" only) --- */
+  /* --- BUILDER ENDER (subtle paper-cream card, ALL TEXT rainbow) --- */
   .builder-card {
     margin-top: 22px;
     background: var(--panel);
@@ -818,46 +818,17 @@
     width: 100%;
     font-size: 14px;
     line-height: 1.6;
-    color: var(--ink-soft);
     opacity: 0;
     transform: translateY(12px);
     text-align: center;
   }
-  .builder-eyebrow {
-    font-size: 10.5px;
-    letter-spacing: 0.3em;
-    font-weight: 700;
-    color: var(--amber);
-    margin-bottom: 10px;
-  }
-  .builder-body .who {
-    font-family: 'Lora', Georgia, serif;
-    font-style: italic;
-    font-size: 16px;
-    color: var(--ink);
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
-  .builder-body .tag {
-    color: var(--muted);
-    font-size: 13px;
-  }
-  .builder-disclaimer {
-    margin-top: 11px;
-    padding-top: 11px;
-    border-top: 1px dashed var(--rule);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
-    color: var(--muted);
-    line-height: 1.55;
-  }
-  .builder-thanks {
-    margin-top: 9px;
-    font-size: 12px;
-    color: var(--sage);
-    font-style: italic;
-  }
-  .rainbow {
+  /* Every text element in the builder card + any standalone .rainbow tag = animated rainbow */
+  .rainbow,
+  .builder-card .builder-eyebrow,
+  .builder-card .who,
+  .builder-card .tag,
+  .builder-card .builder-disclaimer,
+  .builder-card .builder-thanks {
     background: linear-gradient(90deg,
       #E5564A 0%, #E5A84A 14%, #D4A541 28%,
       #5E7A52 42%, #5577B8 56%, #8E5EB8 70%,
@@ -867,14 +838,49 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
-    font-weight: 800;
-    letter-spacing: 0.04em;
     animation: rainbow-shift 3.5s linear infinite;
-    padding: 0 2px;
   }
   @keyframes rainbow-shift {
     0%   { background-position: 0% 50%; }
     100% { background-position: 300% 50%; }
+  }
+  .builder-eyebrow {
+    font-size: 10.5px;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .builder-body .who {
+    font-family: 'Lora', Georgia, serif;
+    font-style: italic;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .builder-body .tag {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .builder-disclaimer {
+    margin-top: 11px;
+    padding-top: 11px;
+    border-top: 1px dashed var(--rule);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    font-weight: 500;
+  }
+  .builder-thanks {
+    margin-top: 9px;
+    font-size: 12.5px;
+    font-style: italic;
+    font-weight: 600;
+  }
+  /* standalone .rainbow (e.g. "vibecoded" span inside disclaimer) gets extra punch */
+  .rainbow {
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 0 2px;
   }
 
   /* --- universal state animators --- */
@@ -1196,7 +1202,7 @@
       <div class="builder-disclaimer">
         disclaimer: this product was <span class="rainbow">vibecoded</span>.<br>
         user purely directed the flow of Opus 4.7 and did nothing technical.
-        <div class="builder-thanks">— thank you, team @ Anthropic 🫡</div>
+        <div class="builder-thanks">— thank you, team @ Anthropic</div>
       </div>
     </div>
   </div>
@@ -1238,6 +1244,26 @@ const DATA = {
       "full writeup tmr."
     ]
   },
+  sideBySide2: {
+    prompt: "write a commit message for this change.",
+    nakedLines: [
+      "This commit introduces a refactoring of the session",
+      "validation logic within the authentication module.",
+      "The primary motivation for this change was to improve",
+      "the maintainability of the error-handling paths,",
+      "specifically targeting the token refresh race",
+      "condition that was identified in recent testing.",
+      "Several edge cases around expired tokens are now",
+      "handled more gracefully."
+    ],
+    cogsigLines: [
+      "auth: tighten session validate",
+      "",
+      "- fix token-refresh race (was swallowing",
+      "  expired-mid-request)",
+      "- narrow bare except on line 47"
+    ]
+  },
   personas: [
     { label: "Alice — terse engineer",    vocab: "wdyt · lgtm · yolo · yagni",       compression: "55 chars (extreme-terse)",  energy: "neutral",            style: "command, terse",         open: "lgtm, ship it",                    real: false },
     { label: "Bob — verbose PM",          vocab: "circling back · loop in · scope",  compression: "180 chars (moderate)",      energy: "neutral sentence-case", style: "question, moderate",     open: "Thanks so much for the update, team", real: false },
@@ -1272,98 +1298,105 @@ const TIMELINE = [
   { t: 12.3, fn: () => fade('b1-o4') },
   { t: 14.5, fn: () => fade('b1-o5') },
 
-  // --- BEAT 2: VOICE SIDE-BY-SIDE (18 - 48s) ---
+  // --- BEAT 2: VOICE SIDE-BY-SIDE (18 - 62s, two examples) ---
   { t: 17.5, fn: () => deactivate('beat1') },
   { t: 18.5, fn: () => activate('beat2') },
   { t: 19.0, fn: () => rise('b2-title') },
+  // Example 1 — email pivot reply
   { t: 20.0, fn: () => { text('b2-prompt', DATA.sideBySide.prompt); fade('b2-prompt'); } },
   { t: 22.0, fn: () => rise('b2-naked') },
   { t: 22.4, fn: () => rise('b2-cogsig') },
-  { t: 23.5, fn: () => streamLines('b2-naked-body', DATA.sideBySide.nakedLines, 0.0, 'n', 450) },
-  { t: 23.5, fn: () => streamLines('b2-cogsig-body', DATA.sideBySide.cogsigLines, 0.0, 'c', 450) },
-  { t: 40.0, fn: () => rise('b2-caption') },
-  { t: 42.5, fn: () => fade('b2-modes') },
+  { t: 23.5, fn: () => streamLines('b2-naked-body', DATA.sideBySide.nakedLines, 0.0, 'n', 400) },
+  { t: 23.5, fn: () => streamLines('b2-cogsig-body', DATA.sideBySide.cogsigLines, 0.0, 'c', 400) },
+  // Hold example 1 for reading
+  // Transition to example 2 — commit message
+  { t: 36.5, fn: () => swapPrompt(DATA.sideBySide2.prompt) },
+  { t: 38.0, fn: () => streamLines('b2-naked-body', DATA.sideBySide2.nakedLines, 0.0, 'n', 400) },
+  { t: 38.0, fn: () => streamLines('b2-cogsig-body', DATA.sideBySide2.cogsigLines, 0.0, 'c', 400) },
+  // Caption + modes after example 2
+  { t: 52.0, fn: () => rise('b2-caption') },
+  { t: 54.5, fn: () => fade('b2-modes') },
 
-  // --- BEAT 2.5: OPERATIONAL PATTERN (48 - 88s) ---
-  { t: 47.0, fn: () => deactivate('beat2') },
-  { t: 48.0, fn: () => activate('beat25') },
-  { t: 48.3, fn: () => fade('b25-eyebrow') },
-  { t: 49.2, fn: () => rise('b25-title') },
-  { t: 50.4, fn: () => fade('b25-sub') },
-  { t: 52.5, fn: () => rise('b25-panel') },
+  // --- BEAT 2.5: OPERATIONAL PATTERN (60 - 100s) ---
+  { t: 59.0, fn: () => deactivate('beat2') },
+  { t: 60.0, fn: () => activate('beat25') },
+  { t: 60.3, fn: () => fade('b25-eyebrow') },
+  { t: 61.2, fn: () => rise('b25-title') },
+  { t: 62.4, fn: () => fade('b25-sub') },
+  { t: 64.5, fn: () => rise('b25-panel') },
   // Turn 1 — bug visible
-  { t: 54.0, fn: () => fade('b25-t1-sep') },
-  { t: 54.9, fn: () => fade('b25-t1-u') },
-  { t: 55.8, fn: () => fade('b25-t1-r') },
-  { t: 56.8, fn: () => fade('b25-t1-bug') },
-  { t: 58.0, fn: () => fade('b25-t1-a') },
-  { t: 59.0, fn: () => fade('b25-t1-note') },
+  { t: 66.0, fn: () => fade('b25-t1-sep') },
+  { t: 66.9, fn: () => fade('b25-t1-u') },
+  { t: 67.8, fn: () => fade('b25-t1-r') },
+  { t: 68.8, fn: () => fade('b25-t1-bug') },
+  { t: 70.0, fn: () => fade('b25-t1-a') },
+  { t: 71.0, fn: () => fade('b25-t1-note') },
   // Turn 2 — same class bug
-  { t: 61.0, fn: () => fade('b25-t2-sep') },
-  { t: 61.9, fn: () => fade('b25-t2-u') },
-  { t: 62.8, fn: () => fade('b25-t2-r') },
-  { t: 63.8, fn: () => fade('b25-t2-bug') },
-  { t: 65.0, fn: () => fade('b25-t2-a') },
+  { t: 73.0, fn: () => fade('b25-t2-sep') },
+  { t: 73.9, fn: () => fade('b25-t2-u') },
+  { t: 74.8, fn: () => fade('b25-t2-r') },
+  { t: 75.8, fn: () => fade('b25-t2-bug') },
+  { t: 77.0, fn: () => fade('b25-t2-a') },
   // Detection card + modes
-  { t: 67.0, fn: () => rise('b25-card') },
-  { t: 71.0, fn: () => fade('b25-modes') },
-  { t: 75.5, fn: () => fade('b25-switch') },
-  { t: 78.5, fn: () => fade('b25-footer') },
+  { t: 79.0, fn: () => rise('b25-card') },
+  { t: 83.0, fn: () => fade('b25-modes') },
+  { t: 87.5, fn: () => fade('b25-switch') },
+  { t: 90.5, fn: () => fade('b25-footer') },
 
-  // --- BEAT 2.75: HOW IT WORKS (87 - 106s) ---
-  { t: 85.5, fn: () => deactivate('beat25') },
-  { t: 86.5, fn: () => activate('beat275') },
-  { t: 87.0, fn: () => fade('b275-eye') },
-  { t: 88.0, fn: () => rise('b275-title') },
-  { t: 89.2, fn: () => fade('b275-sub') },
-  { t: 90.5, fn: () => rise('b275-agents-panel') },
-  { t: 91.5, fn: () => rise('b275-flow-panel') },
+  // --- BEAT 2.75: HOW IT WORKS (99 - 118s) ---
+  { t: 97.5, fn: () => deactivate('beat25') },
+  { t: 98.5, fn: () => activate('beat275') },
+  { t: 99.0, fn: () => fade('b275-eye') },
+  { t: 100.0, fn: () => rise('b275-title') },
+  { t: 101.2, fn: () => fade('b275-sub') },
+  { t: 102.5, fn: () => rise('b275-agents-panel') },
+  { t: 103.5, fn: () => rise('b275-flow-panel') },
   // Agent rows (left panel)
-  { t: 92.5, fn: () => slideIn('b275-agent-1') },
-  { t: 93.3, fn: () => slideIn('b275-agent-2') },
-  { t: 94.1, fn: () => slideIn('b275-agent-3') },
+  { t: 104.5, fn: () => slideIn('b275-agent-1') },
+  { t: 105.3, fn: () => slideIn('b275-agent-2') },
+  { t: 106.1, fn: () => slideIn('b275-agent-3') },
   // Flow steps (right panel)
-  { t: 93.0, fn: () => slideIn('b275-step-1') },
-  { t: 94.0, fn: () => fadeArrow('b275-arrow-1') },
-  { t: 94.8, fn: () => slideIn('b275-step-2') },
-  { t: 95.8, fn: () => fadeArrow('b275-arrow-2') },
-  { t: 96.6, fn: () => slideIn('b275-step-3') },
-  { t: 97.6, fn: () => fadeArrow('b275-arrow-3') },
-  { t: 98.4, fn: () => slideIn('b275-step-4') },
+  { t: 105.0, fn: () => slideIn('b275-step-1') },
+  { t: 106.0, fn: () => fadeArrow('b275-arrow-1') },
+  { t: 106.8, fn: () => slideIn('b275-step-2') },
+  { t: 107.8, fn: () => fadeArrow('b275-arrow-2') },
+  { t: 108.6, fn: () => slideIn('b275-step-3') },
+  { t: 109.6, fn: () => fadeArrow('b275-arrow-3') },
+  { t: 110.4, fn: () => slideIn('b275-step-4') },
 
-  // --- BEAT 3: GRID (107 - 128s) ---
-  { t: 105.5, fn: () => deactivate('beat275') },
-  { t: 106.5, fn: () => activate('beat3') },
-  { t: 107.0, fn: () => fade('b3-eyebrow') },
-  { t: 108.0, fn: () => rise('b3-title') },
-  { t: 109.2, fn: () => fade('b3-sub') },
-  { t: 111.0, fn: () => renderGrid() },
-  { t: 124.0, fn: () => fade('b3-footer') },
+  // --- BEAT 3: GRID (119 - 140s) ---
+  { t: 117.5, fn: () => deactivate('beat275') },
+  { t: 118.5, fn: () => activate('beat3') },
+  { t: 119.0, fn: () => fade('b3-eyebrow') },
+  { t: 120.0, fn: () => rise('b3-title') },
+  { t: 121.2, fn: () => fade('b3-sub') },
+  { t: 123.0, fn: () => renderGrid() },
+  { t: 136.0, fn: () => fade('b3-footer') },
 
-  // --- BEAT 4: MAIN CLOSE (127 - 150s) ---
-  { t: 126.5, fn: () => deactivate('beat3') },
-  { t: 127.5, fn: () => activate('beat4') },
-  { t: 128.0, fn: () => fade('b4-eyebrow') },
-  { t: 129.0, fn: () => rise('b4-measure') },
-  { t: 132.5, fn: () => fade('b4-catches-title') },
-  { t: 133.0, fn: () => renderCatches() },
-  { t: 141.5, fn: () => rise('b4-tag') },
-  { t: 144.0, fn: () => fade('b4-url') },
-  { t: 145.5, fn: () => fade('b4-badge') },
+  // --- BEAT 4: MAIN CLOSE (139 - 162s) ---
+  { t: 138.5, fn: () => deactivate('beat3') },
+  { t: 139.5, fn: () => activate('beat4') },
+  { t: 140.0, fn: () => fade('b4-eyebrow') },
+  { t: 141.0, fn: () => rise('b4-measure') },
+  { t: 144.5, fn: () => fade('b4-catches-title') },
+  { t: 145.0, fn: () => renderCatches() },
+  { t: 153.5, fn: () => rise('b4-tag') },
+  { t: 156.0, fn: () => fade('b4-url') },
+  { t: 157.5, fn: () => fade('b4-badge') },
 
-  // --- BEAT 5: ENDER (samples + builder) (150 - 175s) ---
-  { t: 149.5, fn: () => deactivate('beat4') },
-  { t: 150.5, fn: () => activate('beat5') },
-  { t: 151.0, fn: () => fade('b5-s-eye') },
-  { t: 152.0, fn: () => fade('b5-s-title') },
-  { t: 153.0, fn: () => rise('b5-sample-1') },
-  { t: 153.7, fn: () => rise('b5-sample-2') },
-  { t: 154.4, fn: () => rise('b5-sample-3') },
-  { t: 155.1, fn: () => rise('b5-sample-4') },
-  { t: 158.5, fn: () => rise('b5-builder') },
-  { t: 172.0, fn: () => document.getElementById('replay').classList.add('shown') }
+  // --- BEAT 5: ENDER (samples + builder) (162 - 187s) ---
+  { t: 161.5, fn: () => deactivate('beat4') },
+  { t: 162.5, fn: () => activate('beat5') },
+  { t: 163.0, fn: () => fade('b5-s-eye') },
+  { t: 164.0, fn: () => fade('b5-s-title') },
+  { t: 165.0, fn: () => rise('b5-sample-1') },
+  { t: 165.7, fn: () => rise('b5-sample-2') },
+  { t: 166.4, fn: () => rise('b5-sample-3') },
+  { t: 167.1, fn: () => rise('b5-sample-4') },
+  { t: 170.5, fn: () => rise('b5-builder') },
+  { t: 184.0, fn: () => document.getElementById('replay').classList.add('shown') }
 ];
-const TOTAL = 175;
+const TOTAL = 187;
 
 /* ------------------------------------------------------------------
    Helpers
@@ -1415,6 +1448,12 @@ function streamLines(bodyId, lines, startDelay, tag, perLineMs = 900) {
     body.appendChild(div);
     setTimeout(() => div.classList.add('show-fast'), startDelay * 1000 + i * perLineMs);
   });
+}
+
+function swapPrompt(newPrompt) {
+  $('b2-naked-body').innerHTML = '';
+  $('b2-cogsig-body').innerHTML = '';
+  text('b2-prompt', newPrompt);
 }
 function escape(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
