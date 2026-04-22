@@ -125,6 +125,10 @@ def main() -> int:
     ap.add_argument("--no-seed", action="store_true",
                     help="Skip auto-seed — create empty state for cold-start")
     ap.add_argument("--advisor", choices=["auto", "always", "off"], default="auto")
+    ap.add_argument("--voice-only", action="store_true",
+                    help="Extract only the voice (directing) signature. Skip operational-signature pass.")
+    ap.add_argument("--operational-only", action="store_true",
+                    help="Extract only the operational-patterns signature. Skip voice-signature pass.")
     args = ap.parse_args()
 
     repo = args.repo.resolve()
@@ -183,23 +187,55 @@ def main() -> int:
             print("error: ingest failed", file=sys.stderr)
             return ingest_rc
 
-        print(f"\n[2/2] extracting signature via Opus 4.7 ...")
-        extract_rc = run_cmd([
-            sys.executable, str(extract_script),
-            "--repo", repo_path,
-            "--domain", "directing",
-            "--scope-name", args.scope_name,
-            "--advisor", args.advisor,
-        ])
-        if extract_rc not in (0, 3):
-            print("error: extract failed", file=sys.stderr)
-            return extract_rc
+        do_voice = not args.operational_only
+        do_operational = not args.voice_only
+        total_extracts = int(do_voice) + int(do_operational)
+        step = 2
+        voice_path = repo / ("signature.json" if args.scope_name == "default" else f"signature.{args.scope_name}.json")
+        op_scope = f"{args.scope_name}-operational" if args.scope_name != "default" else "operational"
+        op_path = repo / f"signature.{op_scope}.json"
 
-        sig_name = "signature.json" if args.scope_name == "default" else f"signature.{args.scope_name}.json"
-        print(f"\ncogsig init: complete. signature active at {repo}/{sig_name}")
-        print(f"  toggle on/off:    python3 skills/toggle/toggle.py on|off --repo {repo}")
-        print(f"  check status:     python3 skills/toggle/toggle.py status --repo {repo}")
-        print(f"  refresh:          python3 skills/toggle/toggle.py extract --repo {repo} -- --domain directing")
+        # Both extractions read from the same ingested samples file.
+        samples_filename = "samples.json" if args.scope_name == "default" else f"samples.{args.scope_name}.json"
+        shared_samples = repo / ".signature-cache" / samples_filename
+
+        if do_voice:
+            print(f"\n[{step}/{total_extracts + 1}] extracting VOICE signature via Opus 4.7 (directing domain)...")
+            step += 1
+            rc = run_cmd([
+                sys.executable, str(extract_script),
+                "--repo", repo_path,
+                "--domain", "directing",
+                "--scope-name", args.scope_name,
+                "--samples", str(shared_samples),
+                "--advisor", args.advisor,
+            ])
+            if rc not in (0, 3):
+                print("error: voice extract failed", file=sys.stderr)
+                return rc
+
+        if do_operational:
+            print(f"\n[{step}/{total_extracts + 1}] extracting OPERATIONAL signature via Opus 4.7 (operational domain)...")
+            step += 1
+            rc = run_cmd([
+                sys.executable, str(extract_script),
+                "--repo", repo_path,
+                "--domain", "operational",
+                "--scope-name", op_scope,
+                "--samples", str(shared_samples),
+                "--advisor", args.advisor,
+            ])
+            if rc not in (0, 3):
+                print("error: operational extract failed", file=sys.stderr)
+                return rc
+
+        print(f"\ncogsig init: complete.")
+        if do_voice:
+            print(f"  voice signature:       {voice_path.name}")
+        if do_operational:
+            print(f"  operational signature: {op_path.name}")
+        print(f"  toggle on/off:         python3 skills/toggle/toggle.py on|off --repo {repo}")
+        print(f"  check status:          python3 skills/toggle/toggle.py status --repo {repo}")
         return 0
     finally:
         try:

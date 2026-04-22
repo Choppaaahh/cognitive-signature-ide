@@ -72,6 +72,42 @@ SAMPLES ({sample_count} total user-directives, from dialogue corpus):
 Return the signature JSON now."""
 
 
+PROMPT_OPERATIONAL = """You are analyzing raw user-typed directives to extract the user's OPERATIONAL signature — WHAT THEY'VE LEARNED through usage. NOT how they direct (voice signature handles that). Operational signature captures recurring CONTENT patterns: recurring decision templates, failure modes they've encountered and flag, specific tools they invoke repeatedly, and project-specific vocabulary anchors.
+
+You will output valid JSON matching this schema:
+
+{schema}
+
+Analyze the samples below and return ONLY the JSON object. No markdown, no commentary, just the raw JSON starting with {{ and ending with }}.
+
+Key extraction principles:
+  - RECURRING, not one-off. If a pattern appears only once, it's not a signature pattern — skip.
+  - CONTENT, not style. Voice signature captures idiomatic tells / compression ratio / capitalization. Operational captures "what they said, repeatedly."
+  - EVIDENCE-LINKED. Every item must include `instance_count` (int, count of distinct instances in samples) + `evidence_list` (array of short direct quotes from the samples supporting this pattern). No item may have instance_count=0 or evidence_list=[].
+  - CONSERVATIVE. Prefer missing a pattern to hallucinating one. Do not infer patterns from absence.
+  - OBJECTIVE COUNTING. instance_count is a count you can defend — each instance in evidence_list is one count.
+  - SEPARATE FROM VOICE. If a pattern is stylistic (how they talk), not operational (what they return to), skip it.
+
+Per-dimension guidance:
+  - recurring_decision_templates: situation → response mappings. "When facing X, user does Y." The situation + the response are both content, not style.
+  - recurring_failure_patterns: known failure modes mentioned in context of encountering / flagging them. "The X thing tends to break when..." Must be grounded in explicit mentions, not inferred.
+  - recurring_tooling_invocations: named tool/command/flag invocations. "Always runs git log before Y", "uses vault_search with --top 5 for Z." The tool must be NAMED (not "some CLI command").
+  - vocabulary_anchors: project-specific terminology, domain vocabulary, recurring named entities. Examples of valid anchors: "scaffold", "breadcrumb", "n=2 threshold", "Managed Agents", proper nouns from user's domain. NOT idiomatic tells (voice captures those — e.g. "lmao", "hellyea").
+
+For confidence scores per dimension:
+  - 0.8-1.0: multiple clear patterns, each with 3+ evidence instances
+  - 0.5-0.8: some patterns with 2+ instances
+  - below 0.5: thin evidence — include dimension with low confidence + explain in notes
+
+If a dimension has zero qualifying patterns, return an empty array for that dimension's list field with confidence 0.3 and a note.
+
+SAMPLES ({sample_count} total user-directives, from dialogue corpus):
+
+{samples}
+
+Return the operational signature JSON now."""
+
+
 def format_samples_code(samples: list[dict], max_per_sample: int = 1500) -> str:
     blocks: list[str] = []
     for i, s in enumerate(samples, 1):
@@ -92,7 +128,10 @@ def format_samples_directing(samples: list[dict], max_per_sample: int = 800) -> 
 
 
 def format_samples(samples: list[dict], domain: str = "code") -> str:
-    if domain == "directing":
+    # Both directing and operational domains ingest dialogue corpora
+    # with identical row shape (content + meta fields). Code domain
+    # uses path/language/line_count.
+    if domain in ("directing", "operational"):
         return format_samples_directing(samples)
     return format_samples_code(samples)
 
@@ -112,7 +151,12 @@ def extract(samples_path: Path, schema_path: Path, model: str, domain: str = "co
     samples_doc = json.loads(samples_path.read_text(encoding="utf-8"))
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
 
-    template = PROMPT_DIRECTING if domain == "directing" else PROMPT_CODE
+    if domain == "directing":
+        template = PROMPT_DIRECTING
+    elif domain == "operational":
+        template = PROMPT_OPERATIONAL
+    else:
+        template = PROMPT_CODE
     prompt = template.format(
         schema=json.dumps(schema, indent=2),
         sample_count=samples_doc["sample_count"],
@@ -123,7 +167,7 @@ def extract(samples_path: Path, schema_path: Path, model: str, domain: str = "co
     client = anthropic.Anthropic(api_key=api_key)
     response = client.messages.create(
         model=model,
-        max_tokens=4096,
+        max_tokens=8192,
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -181,8 +225,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Call Opus 4.7 on samples → signature.json")
     ap.add_argument("--repo", type=Path, default=Path.cwd())
     ap.add_argument("--model", default=MODEL_DEFAULT)
-    ap.add_argument("--domain", choices=["code", "directing"], default="code",
-                    help="Signature domain. 'code' = coding signature (legacy). 'directing' = thinking-with-AI signature from dialogue corpus.")
+    ap.add_argument("--domain", choices=["code", "directing", "operational"], default="code",
+                    help="Signature domain. 'code' = coding (Functionality 1 legacy). 'directing' = voice signature (Functionality 1). 'operational' = recurring operational patterns (Functionality 2).")
     ap.add_argument("--scope-name", default="default", help="Signature scope label")
     ap.add_argument("--samples", type=Path, default=None)
     ap.add_argument("--schema", type=Path, default=None)
@@ -195,7 +239,12 @@ def main() -> int:
 
     repo = args.repo.resolve()
     samples_path = args.samples or samples_path_for_scope(repo, args.scope_name)
-    schema_name = "signature_schema_directing.json" if args.domain == "directing" else "signature_schema.json"
+    if args.domain == "directing":
+        schema_name = "signature_schema_directing.json"
+    elif args.domain == "operational":
+        schema_name = "signature_schema_operational.json"
+    else:
+        schema_name = "signature_schema.json"
     schema_path = args.schema or (repo / "skills" / "extract" / schema_name)
     out_path = args.out or signature_path_for_scope(repo, args.scope_name)
     history_path = repo / ".signature-cache" / ("signature_history.jsonl" if args.scope_name == "default" else f"signature_history.{args.scope_name}.jsonl")

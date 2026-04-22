@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Cognitive Signature — Operational Domain v0.2",
+  "description": "Structured output of a user's OPERATIONAL PATTERNS — what they have LEARNED through usage, captured as recurring CONTENT patterns rather than stylistic features. v0.2 restructure per adversarial review: removed reasoning_arcs (cannibalized voice iteration_cadence) and concern_themes (hallucination-pit). Added vocabulary_anchors. Frequency enum replaced by instance_count + evidence_list for objective extraction.",
+  "type": "object",
+  "required": [
+    "version",
+    "generated_ts",
+    "domain",
+    "sample_count",
+    "dimensions",
+    "origin"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "generated_ts": { "type": "string" },
+    "origin": {
+      "type": "string",
+      "enum": ["self", "imported"]
+    },
+    "team_id": { "type": "string" },
+    "domain": {
+      "type": "string",
+      "enum": ["code", "directing", "operational"]
+    },
+    "sample_count": { "type": "integer", "minimum": 1 },
+    "dimensions": {
+      "type": "object",
+      "required": [
+        "recurring_decision_templates",
+        "recurring_failure_patterns",
+        "recurring_tooling_invocations",
+        "vocabulary_anchors"
+      ],
+      "properties": {
+        "recurring_decision_templates": {
+          "type": "object",
+          "description": "Situational → response mappings the user invokes repeatedly. 'When facing X, user does Y.' Distinct from voice — the WHAT of recurring decisions, not the HOW of directing style.",
+          "required": ["templates", "confidence"],
+          "properties": {
+            "templates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["situation", "response", "instance_count", "evidence_list"],
+                "properties": {
+                  "situation": { "type": "string" },
+                  "response": { "type": "string" },
+                  "instance_count": { "type": "integer", "minimum": 1 },
+                  "evidence_list": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "minItems": 1
+                  }
+                }
+              }
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "recurring_failure_patterns": {
+          "type": "object",
+          "description": "Known failure modes the user has encountered and now proactively checks for, flags, or complains about. 'The X thing tends to break when...'",
+          "required": ["patterns", "confidence"],
+          "properties": {
+            "patterns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["pattern", "context", "instance_count", "evidence_list"],
+                "properties": {
+                  "pattern": { "type": "string" },
+                  "context": { "type": "string" },
+                  "instance_count": { "type": "integer", "minimum": 1 },
+                  "evidence_list": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "minItems": 1
+                  }
+                }
+              }
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "recurring_tooling_invocations": {
+          "type": "object",
+          "description": "Specific tools, commands, or flag-combinations the user invokes repeatedly. 'Always runs git log before Y', 'uses vault_search with --top 5 for Z'. Must be named tool/command — not 'the user sometimes does CLI things.'",
+          "required": ["invocations", "confidence"],
+          "properties": {
+            "invocations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["tool", "context", "instance_count", "evidence_list"],
+                "properties": {
+                  "tool": { "type": "string" },
+                  "context": { "type": "string" },
+                  "instance_count": { "type": "integer", "minimum": 1 },
+                  "evidence_list": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "minItems": 1
+                  }
+                }
+              }
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "vocabulary_anchors": {
+          "type": "object",
+          "description": "Project-specific terminology, domain vocabulary, and recurring named entities the user invokes. 'scaffold', 'breadcrumb', 'n=2 threshold', 'Managed Agents', domain-specific nouns. NOT idiomatic tells (which are voice — e.g. 'lmao'). Vocabulary anchors are content-bearing nouns/phrases from the user's domain.",
+          "required": ["anchors", "confidence"],
+          "properties": {
+            "anchors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["term", "domain", "instance_count", "evidence_list"],
+                "properties": {
+                  "term": { "type": "string" },
+                  "domain": { "type": "string" },
+                  "instance_count": { "type": "integer", "minimum": 1 },
+                  "evidence_list": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "minItems": 1
+                  }
+                }
+              }
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}
