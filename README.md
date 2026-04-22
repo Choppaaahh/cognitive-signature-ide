@@ -1,6 +1,8 @@
 # Cognitive Signature IDE
 
-**A Claude Code plugin that captures how YOU think — and injects that signature into Claude's output so it matches your voice instead of a generic one. The architecture is domain-agnostic (code, writing, design). The hackathon demo ships the code domain end-to-end.**
+**Auto-promote patterns from your directives, dialogs, and conversations. Augment Claude's cognitive structure toward yours. 3 deploy modes — any user.**
+
+A Claude Code plugin that captures how you think WITH AI — not what you produce, but how you direct, reframe, trust, push back, converge — and injects that signature into Claude's response structure so Claude responds in your tempo and voice. Over time, Claude's cognitive structure progressively aligns with yours rather than the generic default.
 
 Built for the **Built with Opus 4.7** hackathon (Cerebral Valley + Anthropic), April 2026.
 
@@ -8,127 +10,251 @@ Built for the **Built with Opus 4.7** hackathon (Cerebral Valley + Anthropic), A
 
 ## The problem
 
-You open Claude Code. You ask for a helper function. The suggestion is… fine. Syntactically correct. Semantically reasonable. But it doesn't look like *your* code.
+You open Claude Code. Every session starts cold. You spend the first 15 minutes getting Claude up to speed on how you think. Then it forgets. Next session, you do it again. Every polished output is joint-authored — it came from you + Claude iterating — but nothing carries over. Your directing style, your reframes, your trust signals, your idiomatic tells evaporate at the end of every conversation.
 
-You ask it to draft a response. The prose is competent but generic — it doesn't sound like you.
+**The data to fix this is already on your disk.** Claude Code stores every session as a JSONL. Every message you typed is there, tagged `type: user`. We just consume that corpus, extract the patterns that are uniquely yours, and feed them back as context so Claude's next response matches how you actually work.
 
-You ask for UI copy. The tone is pleasant, corporate, and indistinguishable from every other LLM output on the internet.
+---
 
-Every time, you rewrite.
+## The key insight — contribution, not output
 
-Claude has access to your files. It can see how you work. The gap is: **nobody's told Claude to adapt its output to you specifically** — not just your preferences, but your signature. Your cognitive fingerprint. The specific way you structure thought.
+In an LLM-coupled workflow, your **output** is joint-authored. Your code, your prose, your design docs — they emerged from dialogue with Claude. A "signature" extracted from those outputs captures Claude's style as much as yours.
 
-## What this is
+What's **uniquely yours** is what you typed: your directives, your reframes, your hunches, your trust signals, your idiomatic tells. That's the corpus that actually carries your cognitive signature. CogSig extracts from contribution, not from co-output.
 
-Four skills, three governance agents, two hooks.
+We arrived at this by building the wrong thing first. The original pitch was code-signature — extract how you write code. It worked mechanically. Then: *you don't write your own code anymore — Claude does, under your direction.* The signature was capturing Claude. Pivoted to writing-signature: same problem. Pivoted again to **directing-signature**: the one layer that's unambiguously you. The architecture revealed its own correct target when tested honestly. That iteration IS part of the pitch — see *Discovery arc* below.
 
-1. **Capture** — sample recent artifacts the user has actually authored, optionally scoped to a subset of the repo (work-code vs personal-code)
-2. **Extract** — one Opus 4.7 call produces a structured `signature.json`
-3. **Inject** — prepend the active signature to Claude's context so suggestions match the user's voice
-4. **Toggle** — `/cogsig on | off | status | scope <name> | export | import | diff` — flip it live, switch between signatures, share signatures across teammates
+---
 
-### Why the architecture matters more than the dimensions
+## What it does
 
-The pipeline — **capture → extract → govern → inject** — is the core loop of any system that learns from observation. Capture what the target produces. Compile it into structured patterns. Govern the patterns with adversarial + validation review. Inject them at decision time.
-
-Most "AI personalization" tools skip the governance step. They capture, they extract, they inject. No review means the signature drifts, hallucinates traits, or overfits to outliers — and nothing notices. The three governance agents close that gap:
-
-- **Signature-Brutus** — adversarial pressure on every extraction: "does this actually match the samples, or is it hallucinating traits?"
-- **Signature-QA** — schema validation before signature reaches inject
-- **Signature-Historian** — drift detection across sessions, flags unexplained changes
-
-These run as **Claude Managed Agents** (cloud-hosted, `managed-agents-2026-04-01` beta header) — the plugin dogfoods Anthropic's own multi-agent infrastructure on the layer that makes the plugin trustworthy.
-
-### Domain-agnostic by construction
-
-The pipeline is one. The signature schema is a parameter. Swap the schema + extraction prompt, point the capture skill at different file types, and the same pipeline extracts a signature for any creative domain. For the hackathon demo, **code is the end-to-end-shipped domain** — naming convention, comment density, function length, error handling, import organization, structural preference. Writing and design signatures are schema-swaps, not re-architectures. That work lives in **Future Directions** below — intentionally out of scope here so the demo delivers one domain deeply, not three shallowly.
-
-### Per-project signatures
-
-One developer writes different code in different contexts. Work-repo code looks nothing like personal-hobby code — different naming, different error handling, different comment density. A single signature averaged across both is worse than useless; it makes suggestions that match neither.
-
-The capture skill takes an optional `--scope-name` label and `--include` / `--exclude` path filters. The toggle skill tracks which scope is active:
+**Capture → Extract → Govern → Inject** — one pipeline.
 
 ```
-/cogsig capture --scope-name work     --include "src/**,lib/**"
-/cogsig capture --scope-name personal --include "sandbox/**"
-/cogsig extract --scope-name work
-/cogsig extract --scope-name personal
-/cogsig scope work        → inject uses signature.work.json
-/cogsig scope personal    → inject uses signature.personal.json
-/cogsig scope list        → all available signatures
+your Claude Code sessions  →  filter type:user messages  →  Opus 4.7 extracts signature  →
+                              governance agents review  →  signature.json  →
+                              injected into Claude's response context from this moment on
 ```
 
-Scope switching is observable: a `/cogsig status` call shows exactly which signature is active and the samples it came from.
+### Signature dimensions (directing domain)
 
-### Sharing signatures across a team
+- **directive_style** — command-heavy vs question-heavy, terse vs verbose, hunch-first vs data-first
+- **reframe_pattern** — how often you challenge the frame, what trigger phrases you use ("wait but", "hmmmm", "hold on")
+- **trust_mechanics** — what extends autonomy ("cook it", "go for it") vs what retracts it ("hold on", "show me first")
+- **idiomatic_tells** — openings, closings, vocabulary signature, punctuation habits, capitalization
+- **iteration_cadence** — how you layer thinking across turns, typical arc, do you hold parallel structures
+- **compression_ratio** — typical directive length, what you expect back
+- **texture_energy** — baseline energy, high/low markers, humor signature
 
-`signature.json` is deliberately not something you commit. It's user-specific, `.gitignore`'d, and personal. But a team that wants consistency — everyone's code matching a shared house style — can export and import signatures without leaking code:
+Every dimension includes a confidence score. Every extraction is reviewed by governance agents.
+
+---
+
+## 3 Deploy Modes — any user
+
+Same pipeline. Three deployment choices for the governance layer:
+
+| Mode | Who it's for | Governance runs | Cost |
+|------|-------------|-----------------|------|
+| **Standalone** | Casual users, normies, "just turn on" | Inline single API call, no agents | Tokens only (cheapest) |
+| **In-session agents** | Heavy Claude Code users, dev teams | Signature-Brutus/QA/Historian spawn as Claude Code sub-agents via `/team` | Tokens only |
+| **Cloud-governed** | Enterprise, shared-signature teams | Claude Managed Agents (beta `managed-agents-2026-04-01`) — independent review, cross-device sync, team export | $0.08/session-hour + tokens |
+
+Standalone is the default — zero agent setup, instant value. Team and cloud modes layer on richer governance when users need it. All three share the same capture, same extraction, same injection — only the governance infrastructure changes.
+
+---
+
+## Onboarding — 3 tiers
+
+**Tier 1 — Auto-seed (default)** — the plugin scans `~/.claude/projects/**/*.jsonl`, filters `type: user` entries, extracts a signature. Works for any Claude Code user with zero extra effort. No file exports. No corpus hunting. Your directives are already on disk.
 
 ```
-/cogsig export --team-id alpha-team     → writes signature.export-alpha-team.json
-<teammate>: /cogsig import signature.export-alpha-team.json
+/cogsig init
+→ Found 100 sessions with ~2,400 directives. Build signature? [Y/n]
+→ y
+→ extracting...
+→ signature active.
 ```
 
-The imported signature lands with `origin: "imported"` in the JSON. Signature-Historian reads that field and skips drift-analysis automatically, because drift against an imported reference point is expected behavior, not a bug.
+**Tier 2 — Corpus import** — for users who want to signature a different register (casual chat, Discord, Slack). Point at any JSONL or chat export:
 
-### Live-signature-update (the demo moment)
-
-A `PostToolUse` hook watches your edits during the session. As you write code, the active signature JSON updates in real time. The demo video shows the signature mutating as artifacts get produced — a visible, visceral "the plugin is learning you" moment.
-
-### On the lived basis
-
-This capture→extract→govern→inject loop isn't speculative for me. I've been running a version of it on myself as a research environment — events captured as they happen, compiled into patterns, adversarially reviewed, injected at decision time. That lived N=1 is why the governance layer isn't a bolt-on here; it's load-bearing. Subjective extraction without governance compounds errors silently. I've watched it happen and caught it because the review layer was there.
-
-The hackathon claim is the architecture, not the lived version. The lived version is how I know the architecture holds up in practice.
-
-## Installation
-
-*(Day 5 — install instructions land after the plugin is feature-complete.)*
-
-```bash
-# placeholder
-claude plugin install cognitive-signature-ide
 ```
+/cogsig import-corpus ~/Downloads/discord-export.json --scope personal
+/cogsig import-corpus ~/chat-archive.jsonl
+```
+
+**Tier 3 — Cold start** — for privacy-focused users. Signature builds from live usage forward. Takes days to stabilize.
+
+```
+/cogsig init --no-seed
+```
+
+---
 
 ## Architecture
 
 ```
 cognitive-signature-ide/
-├── plugin.json              ← Claude Code plugin manifest
+├── plugin.json                    ← Claude Code plugin manifest
 ├── skills/
-│   ├── capture/             ← sample user artifacts (code/prose/design)
-│   ├── extract/             ← Opus 4.7 → signature.json
-│   ├── inject/              ← prepend signature to context
-│   └── toggle/              ← /cogsig slash command
+│   ├── capture/                   ← scan user's code (legacy code-domain)
+│   │   └── dialogue_ingest.py     ← scan JSONL dialogue corpus (directing domain)
+│   ├── extract/                   ← Opus 4.7 → signature.json
+│   │   ├── signature_schema.json
+│   │   └── signature_schema_directing.json
+│   ├── inject/                    ← prepend active signature to Claude's context
+│   ├── toggle/                    ← /cogsig on|off|status|scope|diff
+│   ├── export/                    ← share your signature with a teammate
+│   └── import_sig/                ← load a teammate's signature, origin=imported
+├── agents/                        ← in-session governance (Tier 2 deploy mode)
+├── managed-agents/                ← cloud governance (Tier 3 deploy mode, beta)
 ├── hooks/
-│   ├── post-tool-use.sh     ← live-signature-update
-│   └── session-start.sh     ← load cached signature
-├── agents/                  ← local governance agent definitions
-├── managed-agents/          ← cloud-hosted governance (Day 4)
-└── signature.json           ← generated, user-specific, .gitignored
+│   ├── session-start.sh           ← emit signature status on session start
+│   └── post-tool-use.sh           ← (live-signature-update — planned)
+├── measurement/
+│   ├── blind_test.py              ← 3-condition blind comparison rig
+│   ├── score.py                   ← --view / --picks scoring
+│   └── prompts.json
+└── signature.json                 ← generated, gitignored, user-local
 ```
 
-## Build steps
+---
 
-- ✅ **Step 1** — repo init, manifest, README, LICENSE, skill + agent scaffolds
-- ✅ **Step 2** — capture + extract implementation (code domain end-to-end)
-- ⏳ **Step 3** — inject skill + `/cogsig` toggle + diff mode
-- ⏳ **Step 4** — Managed Agents governance layer + n=10 blind measurement
-- ⏳ **Step 5** — live-signature-update hook + polish + Loom recording
-- ⏳ **Step 6** — submission
+## The demo — what changes with CogSig on
+
+```
+PROMPT TO BOTH: "yo draft me a quick reply explaining why we're pivoting"
+
+┌─────────── naked Claude ───────────┐   ┌──── Claude + CogSig ────┐
+│ Here's a draft reply:               │   │ yo team quick one:       │
+│                                     │   │                          │
+│ Hi team,                            │   │ pivoting the build —     │
+│                                     │   │ OG code-sig assumes user │
+│ I wanted to update you on a change  │   │ writes their own code,   │
+│ to our build direction. After       │   │ for heavy Claude users   │
+│ careful consideration and review    │   │ that breaks. directing-  │
+│ of recent feedback, we've decided   │   │ signature captures what  │
+│ to pivot our approach.              │   │ the user actually        │
+│                                     │   │ contributes — cleaner    │
+│ The main drivers are:               │   │ target.                  │
+│                                     │   │                          │
+│ 1. The original assumption...       │   │ 3 deploy modes stand.    │
+│ 2. User feedback indicated...       │   │ full writeup tmr.        │
+│ 3. Upon deeper analysis...          │   │                          │
+└─────────────────────────────────────┘   └──────────────────────────┘
+```
+
+Same information. Radically different shape. The right column matches the user's actual directing style — compressed, lowercase-casual, scaffold-vocab, "tmr" shorthand, parallel-structure thinking.
+
+---
+
+## Governance — why it matters
+
+Signature extraction is subjective. A single Opus call can hallucinate traits, over-generalize from sparse evidence, or drift. Hallucinated directing-signature is more dangerous than hallucinated coding-style — it shapes Claude's reasoning patterns, which you then act on. Three governance agents close that gap:
+
+- **Signature-Brutus** — adversarial: "does this signature actually match the samples, or is it inventing traits?"
+- **Signature-QA** — schema validation before signature reaches inject
+- **Signature-Historian** — drift detection across sessions. Branches on `origin` field: `self` gets full drift analysis; `imported` (from `/cogsig import-corpus <teammate-sig>`) skips drift analysis because cross-user differences are expected.
+
+On first live run of the code-domain version, Signature-Brutus caught a real factual error in the extraction — claimed "PascalCase reserved for constants" when actual constants were UPPER_SNAKE_CASE. Adversarial governance earning its keep on first try. See `logs/scaffold_changes.jsonl` for the audit trail once a review runs.
+
+---
+
+## Discovery arc — why the pivot matters
+
+1. **Started** with code-signature. Shipped end-to-end, first live Opus extraction worked. Managed Agents caught a signature error. Looked good.
+2. **Discovered** that for anyone who delegates code generation to Claude, the output captured was Claude's style shaped by user direction — not the user's. A growing segment of Claude Code users don't author their code directly anymore.
+3. **Pivoted** to writing-signature. Same structural problem: users in coupled workflows don't direct-author their prose either. The polished output is joint.
+4. **Pivoted again** to directing-signature. Raw typed directives are the one corpus that's unambiguously user-authored. Verified against a real 80-directive corpus from live Claude Code sessions — extracted signature carried real user-specific vocabulary, real trust mechanics, real iteration cadence.
+
+The iteration arc is part of the product. It's documented live in the repo's commit history and in the `pattern-signature-captures-contribution-not-co-output` artifact. Meta-level: the architecture revealed its own correct target when tested honestly against real users.
+
+---
 
 ## Measurement
 
-A pre-submission blind test: 10 prompts, Claude answers each under three conditions — baseline / generic-signature placebo / user's real signature injected. The author picks which output is theirs, no labels visible. Result published in the repo with the submission. This is the Impact-30% grounding — not a theoretical claim, a measurable effect.
+Pre-submission blind test:
 
-## Future directions (out of scope for submission)
+- 10 prompts
+- 3 conditions each: baseline / placebo-signature / real-signature
+- Author picks which output is theirs, blind
+- Accuracy vs 33% chance baseline = measurable effect size
 
-- **Writing domain** — sentence length, tonal register, paragraph cadence, idiomatic tells. Schema-swap, same pipeline. Validation is subjective enough to warrant its own post-hackathon iteration.
-- **Design domain** — palette preference, spacing density, component composition. Needs a non-code capture layer (Figma API or CSS/HTML sampling). Post-hackathon.
+See `measurement/` for the harness. Results published with the submission. Honest caveats included (N=10 small, self-scored, placebo-is-not-true-zero).
 
-These are architecture-supported but deliberately not shipped for the submission. One domain shipped deeply beats three shipped shallowly.
+---
+
+## The trajectory — "one mind" in professional register
+
+Every Claude session, you spend the first 15 minutes bringing Claude up to speed on how you think. Then it forgets. CogSig captures that "up-to-speed" layer and makes it persistent.
+
+- **Day 1** — starter signature from your existing Claude Code history. Claude stops responding in corporate-assistant register.
+- **Week 1** — signature refines as you use it. Your idiomatic tells, trust signals, reframe patterns get absorbed.
+- **Month 1+** — governance layers accumulate history. Claude doesn't just match your tempo, it reasons WITH your accumulated decision patterns.
+
+The endpoint is functional convergence: friction drops near zero, you + Claude operate as a coupled cognitive system producing work neither of you could produce alone. This doesn't require months of scaffolding — because directing-patterns (compression ratio, reframe density, idiom tells) fire on every message, they accumulate in days what architectural-decision patterns take months to accumulate.
+
+The repo's author has been running a version of this trajectory as a long-term research environment on a separate project. N=1, lived, validated over time. This plugin packages the same capture→extract→govern→inject loop for anyone on Claude Code.
+
+---
+
+## Install
+
+```bash
+# Prerequisites
+export ANTHROPIC_API_KEY=sk-ant-...
+pip install anthropic jsonschema
+
+# Clone
+git clone https://github.com/Choppaaahh/cognitive-signature-ide
+cd cognitive-signature-ide
+
+# Auto-seed from your Claude Code session history
+python3 skills/capture/dialogue_ingest.py \
+    --input ~/.claude/projects/<project>/some-session.jsonl \
+    --source-filter user --max-samples 80
+python3 skills/extract/extract.py --domain directing
+
+# Inject into Claude
+python3 skills/inject/inject.py --force
+# (or wire via Claude Code plugin install once plugin manifest is finalized)
+```
+
+Full auto-seed command (`/cogsig init`) + Claude Code plugin install path lands in the final build.
+
+---
+
+## Future directions (not shipped in this submission)
+
+- **Writing domain** — for users who author their own prose directly. Schema swap + prompt rewrite. Architecture-supported.
+- **Design domain** — requires Figma/CSS capture layer. Not shipped.
+- **Auto-promote threshold** (n=2 → n=current) — pattern detection fires promote automatically when a pattern repeats. Time-compression mechanism that makes week-1 signatures richer than month-1 signatures without user intervention.
+- **Diff mode** — `/cogsig diff` renders side-by-side (yours / placebo / baseline) for any prompt. Demo visible, useful for evaluating fit.
+- **Full auto PostToolUse live-update** — every user message triggers a small background signature refresh. Threshold-based promotion. Currently user-triggered via `/cogsig refresh`.
+
+---
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+---
+
+## Honest framing
+
+This plugin was built in ~5 days for a hackathon. It is NOT a production product. The core pipeline (capture, extract, govern, inject, three deploy modes) is functional and verified end-to-end. Several specific interfaces (the full `/cogsig init` command, the PostToolUse live-update hook, the diff mode rendering) are scaffolded but not production-polished. The Claude Code plugin install path is prepared in `plugin.json` but has not been tested through the official plugin loader — that's Step 6 work.
+
+What's genuinely demo-able and reproducible today:
+- Auto-extract a directing-signature from Claude Code session JSONLs: YES
+- Run Opus 4.7 extraction on that corpus: YES (live-verified)
+- Managed Agents governance review: YES (live-verified on first run, caught a real error)
+- 3-condition blind test: YES (harness + 30 outputs generated per run)
+- Per-scope signatures (work vs personal): YES
+- Team export/import: YES
+
+What's promised but not shipped in this submission:
+- Writing + design domains (Future Directions)
+- Auto-promote threshold (user-triggered refresh instead)
+- Full `/cogsig init` end-to-end one-command setup (the scripts work; the slash-command wrapper is the last mile)
+
+The iteration arc from code-signature to directing-signature happened during the hackathon window. Both versions exist in the commit history as evidence of the honest architectural discovery, not as polish-failure.

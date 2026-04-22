@@ -38,16 +38,57 @@ class DirectiveSample:
     char_count: int = 0
 
 
+def extract_content_text(raw_content) -> str | None:
+    """Extract plain text from a content field that may be a string or a list of blocks.
+
+    Claude Code native format stores content as either a string or a list of dicts like
+    [{"type": "text", "text": "..."}, {"type": "tool_use", ...}].
+    """
+    if isinstance(raw_content, str):
+        return raw_content
+    if isinstance(raw_content, list):
+        text_parts = []
+        for block in raw_content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                t = block.get("text")
+                if isinstance(t, str):
+                    text_parts.append(t)
+        return "\n".join(text_parts) if text_parts else None
+    return None
+
+
 def parse_row(raw: dict) -> tuple[str | None, str | None, str | None, str | None]:
-    """Extract (content, source, ts, meta) from a JSONL row in one of several known formats."""
-    content = raw.get("content") or raw.get("text") or raw.get("message")
+    """Extract (content, source, ts, meta) from a JSONL row in one of several known formats.
+
+    Supported formats:
+      - private scaffold breadcrumbs: {ts, type, content[, source]}
+      - Claude Code native session: {type:"user"|"assistant", message:{role, content:str|list[block]}}
+      - Discord export: {ts, author, content}
+      - Generic chat: {content:str, ...}
+    """
+    row_type = raw.get("type") or raw.get("kind")
     source = raw.get("source") or raw.get("author") or raw.get("role")
     ts = raw.get("ts") or raw.get("timestamp") or raw.get("created_at")
-    row_type = raw.get("type") or raw.get("kind")
+
+    # Claude Code native format: content lives under message.content,
+    # role lives under message.role or is implied by top-level type.
+    content: str | None = None
+    message = raw.get("message")
+    if isinstance(message, dict):
+        content = extract_content_text(message.get("content"))
+        if not source:
+            source = message.get("role")
+    if content is None:
+        content = extract_content_text(raw.get("content")) or raw.get("text")
+
+    # If row_type is "user"/"assistant" (Claude Code native), treat as source hint
+    if not source and row_type in ("user", "assistant"):
+        source = row_type
+
     meta_parts: list[str] = []
     if ts:
         meta_parts.append(str(ts)[:19])
-    if row_type:
+    if row_type and row_type not in ("user", "assistant"):
         meta_parts.append(f"type:{row_type}")
     if source:
         meta_parts.append(f"src:{source}")
@@ -63,7 +104,7 @@ def is_user_row(source: str | None, row_type: str | None, source_filter: str) ->
             return True
         if source in ("agent", "assistant", "bot", "system"):
             return False
-        # Unknown source — if row_type looks like user-typed content, accept
+        # Legacy breadcrumb row types that were typed by the user before source field was added
         if row_type in ("hunch", "dialogue", "config"):
             return True
         return False
