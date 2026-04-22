@@ -4,10 +4,13 @@
 Subcommands:
     on                              — enable injection (default)
     off                             — disable injection
-    status                          — show state + active-scope signature metadata
+    status                          — show state + active-scope signature metadata + active governance mode
     diff                            — three-way comparison of next response (Step 5)
     scope <name>                    — switch active scope (default / work / personal / ...)
     scope list                      — list all locally-available signature scopes
+    mode <standalone|team|cloud>    — select governance deployment mode
+    mode status                     — show active governance mode
+    init [-- init-args...]          — auto-seed signature from Claude Code session history
     capture [-- scope-args...]      — route to capture skill
     extract [-- scope-args...]      — route to extract skill
     export [-- export-args...]      — route to export skill (team-sharing)
@@ -27,16 +30,20 @@ def state_path(repo: Path) -> Path:
     return repo / ".signature-cache" / "state.json"
 
 
+VALID_MODES = ("standalone", "team", "cloud")
+
+
 def load_state(repo: Path) -> dict:
     path = state_path(repo)
     if not path.exists():
-        return {"enabled": True, "active_scope": "default"}
+        return {"enabled": True, "active_scope": "default", "active_mode": "standalone"}
     try:
         state = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return {"enabled": True, "active_scope": "default"}
+        return {"enabled": True, "active_scope": "default", "active_mode": "standalone"}
     state.setdefault("enabled", True)
     state.setdefault("active_scope", "default")
+    state.setdefault("active_mode", "standalone")
     return state
 
 
@@ -85,8 +92,9 @@ def cmd_status(repo: Path, _rest: list[str]) -> int:
     state = load_state(repo)
     enabled = "ON" if state["enabled"] else "OFF"
     scope = state["active_scope"]
+    mode = state.get("active_mode", "standalone")
     sig_path = signature_path_for_scope(repo, scope)
-    print(f"cogsig: {enabled} | active scope: {scope}")
+    print(f"cogsig: {enabled} | scope: {scope} | governance mode: {mode}")
 
     if not sig_path.exists():
         print(f"  no signature at {sig_path.name} — run /cogsig capture + /cogsig extract")
@@ -137,6 +145,47 @@ def cmd_scope(repo: Path, rest: list[str]) -> int:
     return 0
 
 
+def cmd_mode(repo: Path, rest: list[str]) -> int:
+    """/cogsig mode <name> | mode status | mode list — select governance deployment mode."""
+    if not rest or rest[0] == "status":
+        state = load_state(repo)
+        mode = state.get("active_mode", "standalone")
+        print(f"cogsig: governance mode = {mode}")
+        _print_mode_description(mode)
+        return 0
+    if rest[0] == "list":
+        state = load_state(repo)
+        active = state.get("active_mode", "standalone")
+        print("cogsig governance modes:")
+        for m in VALID_MODES:
+            marker = " *" if m == active else ""
+            print(f"  {m}{marker}")
+            _print_mode_description(m, indent="      ")
+        return 0
+    target = rest[0]
+    if target not in VALID_MODES:
+        print(f"cogsig: unknown mode '{target}'. Valid: {', '.join(VALID_MODES)}", file=sys.stderr)
+        return 1
+    state = load_state(repo)
+    state["active_mode"] = target
+    state["mode_switched_at"] = datetime.now(timezone.utc).isoformat()
+    save_state(repo, state)
+    print(f"cogsig: governance mode -> {target}")
+    _print_mode_description(target)
+    return 0
+
+
+def _print_mode_description(mode: str, indent: str = "  ") -> None:
+    descriptions = {
+        "standalone": "direct API call, no governance agents — fastest, cheapest, normies/casual users",
+        "team": "in-session Claude Code sub-agents via /team (Signature-Brutus/QA/Historian) — power users, small teams",
+        "cloud": "Claude Managed Agents beta (managed-agents-2026-04-01) — enterprise, audit trail, cross-device sync",
+    }
+    desc = descriptions.get(mode)
+    if desc:
+        print(f"{indent}{desc}")
+
+
 def cmd_diff(repo: Path, _rest: list[str]) -> int:
     print("cogsig: diff mode not yet implemented (Step 5 target).")
     print("  planned: render next response under three conditions — baseline / placebo / real signature")
@@ -165,6 +214,7 @@ HANDLERS = {
     "off": cmd_off,
     "status": cmd_status,
     "scope": cmd_scope,
+    "mode": cmd_mode,
     "diff": cmd_diff,
 }
 
