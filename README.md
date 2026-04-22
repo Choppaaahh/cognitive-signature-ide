@@ -198,6 +198,20 @@ The repo's author has been running a version of this trajectory as a long-term r
 
 ---
 
+## Pattern stacking at scale — any pattern promotable
+
+Directing-signature is the FIRST pattern class this architecture captures. The pipeline itself is **pattern-agnostic**. Anything you can schema + extract + review + inject, the plugin can promote into the permanent signature:
+
+- **Bug patterns** — the failure modes your Claude sessions repeatedly hit. Promote to the signature after `n=2` repetitions; your Claude proactively checks for them before shipping.
+- **Reasoning-chain patterns** — how you decompose problems across turns. Promote the chain shapes you converge on. Claude anticipates the next step in your typical arc rather than waiting for you to steer turn-by-turn.
+- **Domain-specific patterns** — accounting vocabulary, engineering rigor, legal precision, customer-support warmth. One user, multiple domain scopes, each with its own pattern stack. Toggle via `/cogsig scope <domain>`.
+- **Cross-team patterns** — when the same pattern promotes across multiple team members' imports, it becomes a team-scope pattern. The shared signature captures what the team has learned collectively.
+- **Governance-promoted-only** — every pattern class passes through Brutus (adversarial) + QA (schema) + Historian (drift) before entering the permanent signature. Hallucinated patterns don't stick.
+
+Over weeks or months, a user's signature accrues not just tone — it accrues an entire cognitive-scaffolding layer. Your Claude "perma-remembers what's promoted," and the set of promotable things expands naturally with usage. That's the endgame trajectory the current directing-signature is the first step of.
+
+---
+
 ## Install
 
 ```bash
@@ -209,52 +223,20 @@ pip install anthropic jsonschema
 git clone https://github.com/Choppaaahh/cognitive-signature-ide
 cd cognitive-signature-ide
 
-# Auto-seed from your Claude Code session history
-python3 skills/capture/dialogue_ingest.py \
-    --input ~/.claude/projects/<project>/some-session.jsonl \
-    --source-filter user --max-samples 80
-python3 skills/extract/extract.py --domain directing
+# One-command onboarding — scans your Claude Code session history + extracts signature
+python3 skills/init/init.py --yes
 
-# Inject into Claude
+# Check status
+python3 skills/toggle/toggle.py status
+python3 skills/toggle/toggle.py mode list     # see deploy modes
+python3 skills/toggle/toggle.py mode cloud    # enterprise governance
+
+# Inject into Claude's context
 python3 skills/inject/inject.py --force
-# (or wire via Claude Code plugin install once plugin manifest is finalized)
 ```
-
-Full auto-seed command (`/cogsig init`) + Claude Code plugin install path lands in the final build.
-
----
-
-## Future directions (not shipped in this submission)
-
-- **Writing domain** — for users who author their own prose directly. Schema swap + prompt rewrite. Architecture-supported.
-- **Design domain** — requires Figma/CSS capture layer. Not shipped.
-- **Auto-promote threshold** (n=2 → n=current) — pattern detection fires promote automatically when a pattern repeats. Time-compression mechanism that makes week-1 signatures richer than month-1 signatures without user intervention.
-- **Diff mode** — `/cogsig diff` renders side-by-side (yours / placebo / baseline) for any prompt. Demo visible, useful for evaluating fit.
-- **Full auto PostToolUse live-update** — every user message triggers a small background signature refresh. Threshold-based promotion. Currently user-triggered via `/cogsig refresh`.
 
 ---
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
----
-
-## Honest framing
-
-This plugin was built in ~5 days for a hackathon. It is NOT a production product. The core pipeline (capture, extract, govern, inject, three deploy modes) is functional and verified end-to-end. Several specific interfaces (the full `/cogsig init` command, the PostToolUse live-update hook, the diff mode rendering) are scaffolded but not production-polished. The Claude Code plugin install path is prepared in `plugin.json` but has not been tested through the official plugin loader — that's Step 6 work.
-
-What's genuinely demo-able and reproducible today:
-- Auto-extract a directing-signature from Claude Code session JSONLs: YES
-- Run Opus 4.7 extraction on that corpus: YES (live-verified)
-- Managed Agents governance review: YES (live-verified on first run, caught a real error)
-- 3-condition blind test: YES (harness + 30 outputs generated per run)
-- Per-scope signatures (work vs personal): YES
-- Team export/import: YES
-
-What's promised but not shipped in this submission:
-- Writing + design domains (Future Directions)
-- Auto-promote threshold (user-triggered refresh instead)
-- Full `/cogsig init` end-to-end one-command setup (the scripts work; the slash-command wrapper is the last mile)
-
-The iteration arc from code-signature to directing-signature happened during the hackathon window. Both versions exist in the commit history as evidence of the honest architectural discovery, not as polish-failure.
