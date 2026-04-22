@@ -18,11 +18,11 @@ Claude Managed Agents (public beta, header `managed-agents-2026-04-01`).
 
 All three are created on first run and their IDs cached in `.signature-cache/managed-agents.json`. System prompts live in `client.py::GOVERNANCE_AGENTS`.
 
-| Agent | Model | Role |
-|-------|-------|------|
-| Signature-Brutus | `claude-opus-4-7` | Adversarial review of every dimension vs source samples |
-| Signature-QA | `claude-haiku-4-5-20251001` | Schema validation, PASS/FAIL |
-| Signature-Historian | `claude-sonnet-4-6` | Drift classification across history (respects `origin: imported` branch) |
+| Agent | Model | Role (dual-function) |
+|-------|-------|----------------------|
+| `brutus` | `claude-opus-4-7` | F1: adversarial review of signature vs source samples · F2: general code / decision / math-claim review |
+| `qa` | `claude-haiku-4-5-20251001` | F1: signature-schema validation (PASS/FAIL) · F2: general compile / dead-code / silent-failure audit |
+| `historian` | `claude-sonnet-4-6` | F1: signature drift classification (respects `origin: imported` branch) · F2: general config / metric / decision drift tracking |
 
 ## Usage
 
