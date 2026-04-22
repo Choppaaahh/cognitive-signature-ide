@@ -241,14 +241,148 @@
   }
   .sxs-line { opacity: 0; }
   .sxs-caption {
-    margin-top: 36px;
+    margin-top: 28px;
     font-family: 'Lora', Georgia, serif;
-    font-size: 22px;
+    font-size: 21px;
     font-style: italic;
     color: var(--sage);
     opacity: 0;
   }
   .sxs-caption .em { color: var(--amber); font-style: normal; font-weight: 600; font-family: 'Inter', sans-serif; }
+
+  .sxs-modes {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    opacity: 0;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+  }
+  .sxs-modes .chip {
+    display: inline-block;
+    margin: 0 5px;
+    padding: 3px 9px;
+    border-radius: 3px;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+  .sxs-modes .chip.on { background: var(--amber); color: #FFF8E8; border-color: var(--amber); }
+
+  /* --- BEAT 2.5: OPERATIONAL PATTERN --- */
+  .op-eyebrow {
+    font-size: 13px; letter-spacing: 0.3em; font-weight: 600;
+    color: var(--amber); margin-bottom: 10px; opacity: 0;
+  }
+  .op-title {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 32px; font-weight: 500;
+    margin-bottom: 6px;
+    text-align: center;
+    opacity: 0;
+  }
+  .op-sub {
+    font-size: 17px; color: var(--muted);
+    margin-bottom: 26px; text-align: center;
+    font-style: italic;
+    max-width: 1000px;
+    line-height: 1.5;
+    opacity: 0;
+  }
+  .op-panel {
+    background: #1B1815;
+    border: 1px solid #2A251F;
+    border-radius: 10px;
+    width: 1200px; max-width: 92vw;
+    padding: 18px 24px 22px;
+    box-shadow: 0 15px 50px rgba(20,20,19,0.15);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #E7DFCB;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .op-turn-sep {
+    margin: 14px 0 8px;
+    color: #7A6E55;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    border-top: 1px dashed #3A342C;
+    padding-top: 12px;
+    opacity: 0;
+  }
+  .op-line { opacity: 0; }
+  .op-user { color: #E99767; }
+  .op-user::before { content: '▸ you: '; color: #7A6E55; }
+  .op-ai { color: #9FB896; margin-left: 22px; display: block; }
+  .op-ai::before { content: '↳ claude: '; color: #7A6E55; }
+  .op-bug { color: #E5564A; }
+  .op-hint { color: #7A6E55; font-style: italic; }
+
+  .op-detected {
+    margin-top: 14px;
+    background: linear-gradient(135deg, rgba(193,95,60,0.18), rgba(193,95,60,0.06));
+    border: 1px solid rgba(193,95,60,0.5);
+    border-radius: 6px;
+    padding: 14px 18px;
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  .op-detected .op-det-title {
+    color: #E99767;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .op-detected .op-det-body { color: #E7DFCB; font-size: 13.5px; }
+  .op-detected .op-det-body .key { color: #7A6E55; }
+  .op-detected .op-det-ev { color: #9A8E75; font-size: 12px; margin-top: 3px; font-style: italic; }
+
+  .op-modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+    opacity: 0;
+  }
+  .op-mode {
+    border-radius: 5px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .op-mode.auto {
+    background: rgba(94,122,82,0.15);
+    border: 1px solid rgba(94,122,82,0.5);
+    color: #9FB896;
+  }
+  .op-mode.review {
+    background: rgba(184,134,11,0.12);
+    border: 1px solid rgba(184,134,11,0.45);
+    color: #D4A541;
+  }
+  .op-mode .op-mode-label {
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-size: 10.5px;
+    margin-bottom: 2px;
+  }
+  .op-mode .op-mode-hint { color: #7A6E55; font-size: 11.5px; font-style: italic; }
+
+  .op-footer {
+    margin-top: 22px;
+    font-family: 'Lora', Georgia, serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--sage);
+    text-align: center;
+    opacity: 0;
+    max-width: 1050px;
+  }
+  .op-footer .em { color: var(--amber); font-family: 'Inter', sans-serif; font-weight: 600; font-style: normal; }
 
   /* --- BEAT 3: GRID --- */
   .grid-eyebrow {
@@ -568,6 +702,65 @@
       Same information. Radically different shape.
       <span class="em"> Right column matches the user's voice.</span>
     </p>
+    <div class="sxs-modes" id="b2-modes">
+      Governance mode:
+      <span class="chip on">normie · hands-off</span>
+      <span class="chip">power · review-first</span>
+      <span class="chip">team · approval-queue</span>
+      <span class="chip">enterprise · audit-log</span>
+    </div>
+  </div>
+
+  <!-- BEAT 2.5: OPERATIONAL PATTERN IN ACTION -->
+  <div class="beat" id="beat25">
+    <div class="op-eyebrow" id="b25-eyebrow">FUNCTIONALITY 2 · OPERATIONAL PATTERNS</div>
+    <h2 class="op-title" id="b25-title">Two turns, same bug class. Claude notices.</h2>
+    <p class="op-sub" id="b25-sub">
+      Operational patterns extract the same way voice does — but over failure modes, reasoning chains, and recurring decisions. Watch one get promoted live.
+    </p>
+    <div class="op-panel" id="b25-panel">
+
+      <!-- Turn 1 -->
+      <div class="op-turn-sep" id="b25-t1-sep">TURN 1 · earlier today</div>
+      <div class="op-line" id="b25-t1-u"><span class="op-user">fix the deploy — import error on market_recorder</span></div>
+      <div class="op-line" id="b25-t1-a"><span class="op-ai">ok, added the missing import. deploy ✓</span></div>
+      <div class="op-line op-hint" id="b25-t1-note">   (pre-deploy check: none)</div>
+
+      <!-- Turn 2 -->
+      <div class="op-turn-sep" id="b25-t2-sep">TURN 2 · 90 min later</div>
+      <div class="op-line" id="b25-t2-u"><span class="op-user">same thing on hyper_replay now, <span class="op-bug">ModuleNotFoundError</span></span></div>
+      <div class="op-line" id="b25-t2-a"><span class="op-ai">same class as earlier — noticed a pattern.</span></div>
+
+      <!-- Detection card -->
+      <div class="op-detected" id="b25-card">
+        <div class="op-det-title">⚡ OPERATIONAL PATTERN DETECTED</div>
+        <div class="op-det-body">
+          <span class="key">pattern:</span> "deploy without pre-deploy import sanity check"<br>
+          <span class="key">instance_count:</span> 2<br>
+          <span class="key">dim:</span> recurring_failure_patterns
+          <div class="op-det-ev">evidence: market_recorder (2:14 PM), hyper_replay (3:41 PM)</div>
+        </div>
+      </div>
+
+      <!-- Modes -->
+      <div class="op-modes" id="b25-modes">
+        <div class="op-mode auto">
+          <div class="op-mode-label">▸ NORMIE MODE</div>
+          ✓ auto-promoted to permanent signature
+          <div class="op-mode-hint">silent — you didn't have to do anything</div>
+        </div>
+        <div class="op-mode review">
+          <div class="op-mode-label">▸ POWER / TEAM MODE</div>
+          → pending review: <span style="color:#E7DFCB">/cogsig approve 1</span>
+          <div class="op-mode-hint">Claude surfaces it in your next turn — you approve or reject</div>
+        </div>
+      </div>
+
+    </div>
+    <p class="op-footer" id="b25-footer">
+      Next session, Claude already knows this about your deploys.<br>
+      <span class="em">Your operational knowledge compounds.</span>
+    </p>
   </div>
 
   <!-- BEAT 3: GRID -->
@@ -665,52 +858,74 @@ const DATA = {
    Total: 120s (2:00)
    ------------------------------------------------------------------ */
 const TIMELINE = [
-  // --- BEAT 1: HERO (0 - 24s) ---
+  // --- BEAT 1: HERO (0 - 20s) ---
   { t: 0.0,  fn: () => activate('beat1') },
   { t: 0.5,  fn: () => rise('b1-eyebrow') },
   { t: 1.2,  fn: () => rise('b1-title') },
   { t: 3.2,  fn: () => rise('b1-sub') },
-  { t: 6.0,  fn: () => rise('b1-term') },
-  { t: 7.0,  fn: () => typeCmd('b1-cmd', '/cogsig init --yes', 1200) },
-  { t: 9.0,  fn: () => { hide('b1-cur'); fade('b1-o1'); } },
-  { t: 10.5, fn: () => fade('b1-o2') },
-  { t: 12.5, fn: () => fade('b1-o3') },
-  { t: 14.5, fn: () => fade('b1-o4') },
-  { t: 17.0, fn: () => fade('b1-o5') },
+  { t: 5.5,  fn: () => rise('b1-term') },
+  { t: 6.3,  fn: () => typeCmd('b1-cmd', '/cogsig init --yes', 1000) },
+  { t: 8.0,  fn: () => { hide('b1-cur'); fade('b1-o1'); } },
+  { t: 9.3,  fn: () => fade('b1-o2') },
+  { t: 10.8, fn: () => fade('b1-o3') },
+  { t: 12.3, fn: () => fade('b1-o4') },
+  { t: 14.5, fn: () => fade('b1-o5') },
 
-  // --- BEAT 2: SIDE-BY-SIDE (24 - 70s) ---
-  { t: 22.0, fn: () => deactivate('beat1') },
-  { t: 23.0, fn: () => activate('beat2') },
-  { t: 23.5, fn: () => rise('b2-title') },
-  { t: 24.8, fn: () => { text('b2-prompt', DATA.sideBySide.prompt); fade('b2-prompt'); } },
-  { t: 27.5, fn: () => rise('b2-naked') },
-  { t: 28.0, fn: () => rise('b2-cogsig') },
-  { t: 29.5, fn: () => streamLines('b2-naked-body', DATA.sideBySide.nakedLines, 1.2, 'n') },
-  { t: 29.5, fn: () => streamLines('b2-cogsig-body', DATA.sideBySide.cogsigLines, 1.2, 'c') },
-  { t: 60.0, fn: () => rise('b2-caption') },
+  // --- BEAT 2: VOICE SIDE-BY-SIDE (20 - 50s) ---
+  { t: 19.0, fn: () => deactivate('beat1') },
+  { t: 20.0, fn: () => activate('beat2') },
+  { t: 20.5, fn: () => rise('b2-title') },
+  { t: 21.5, fn: () => { text('b2-prompt', DATA.sideBySide.prompt); fade('b2-prompt'); } },
+  { t: 23.5, fn: () => rise('b2-naked') },
+  { t: 23.9, fn: () => rise('b2-cogsig') },
+  { t: 25.0, fn: () => streamLines('b2-naked-body', DATA.sideBySide.nakedLines, 0.0, 'n', 450) },
+  { t: 25.0, fn: () => streamLines('b2-cogsig-body', DATA.sideBySide.cogsigLines, 0.0, 'c', 450) },
+  { t: 42.0, fn: () => rise('b2-caption') },
+  { t: 44.5, fn: () => fade('b2-modes') },
 
-  // --- BEAT 3: GRID (70 - 95s) ---
-  { t: 68.0, fn: () => deactivate('beat2') },
-  { t: 69.0, fn: () => activate('beat3') },
-  { t: 69.5, fn: () => fade('b3-eyebrow') },
-  { t: 70.5, fn: () => rise('b3-title') },
-  { t: 72.0, fn: () => fade('b3-sub') },
-  { t: 74.0, fn: () => renderGrid() },
-  { t: 90.0, fn: () => fade('b3-footer') },
+  // --- BEAT 2.5: OPERATIONAL PATTERN (50 - 92s) ---
+  { t: 49.0, fn: () => deactivate('beat2') },
+  { t: 50.0, fn: () => activate('beat25') },
+  { t: 50.3, fn: () => fade('b25-eyebrow') },
+  { t: 51.2, fn: () => rise('b25-title') },
+  { t: 52.5, fn: () => fade('b25-sub') },
+  { t: 54.5, fn: () => rise('b25-panel') },
+  // Turn 1
+  { t: 56.0, fn: () => fade('b25-t1-sep') },
+  { t: 57.0, fn: () => fade('b25-t1-u') },
+  { t: 58.5, fn: () => fade('b25-t1-a') },
+  { t: 60.0, fn: () => fade('b25-t1-note') },
+  // Turn 2
+  { t: 62.5, fn: () => fade('b25-t2-sep') },
+  { t: 64.0, fn: () => fade('b25-t2-u') },
+  { t: 66.5, fn: () => fade('b25-t2-a') },
+  // Detection card + modes
+  { t: 69.0, fn: () => rise('b25-card') },
+  { t: 73.0, fn: () => fade('b25-modes') },
+  { t: 80.0, fn: () => fade('b25-footer') },
 
-  // --- BEAT 4: CLOSE (95 - 120s) ---
-  { t: 93.5, fn: () => deactivate('beat3') },
-  { t: 94.5, fn: () => activate('beat4') },
-  { t: 95.0, fn: () => fade('b4-eyebrow') },
-  { t: 96.0, fn: () => rise('b4-measure') },
-  { t: 100.0, fn: () => fade('b4-catches-title') },
-  { t: 100.5, fn: () => renderCatches() },
-  { t: 111.0, fn: () => rise('b4-tag') },
-  { t: 113.5, fn: () => fade('b4-url') },
-  { t: 115.0, fn: () => fade('b4-badge') },
-  { t: 119.0, fn: () => document.getElementById('replay').classList.add('shown') }
+  // --- BEAT 3: GRID (92 - 118s) ---
+  { t: 90.5, fn: () => deactivate('beat25') },
+  { t: 91.5, fn: () => activate('beat3') },
+  { t: 92.0, fn: () => fade('b3-eyebrow') },
+  { t: 93.0, fn: () => rise('b3-title') },
+  { t: 94.2, fn: () => fade('b3-sub') },
+  { t: 96.0, fn: () => renderGrid() },
+  { t: 112.0, fn: () => fade('b3-footer') },
+
+  // --- BEAT 4: CLOSE (118 - 145s) ---
+  { t: 115.5, fn: () => deactivate('beat3') },
+  { t: 116.5, fn: () => activate('beat4') },
+  { t: 117.0, fn: () => fade('b4-eyebrow') },
+  { t: 118.0, fn: () => rise('b4-measure') },
+  { t: 122.0, fn: () => fade('b4-catches-title') },
+  { t: 122.5, fn: () => renderCatches() },
+  { t: 133.0, fn: () => rise('b4-tag') },
+  { t: 135.5, fn: () => fade('b4-url') },
+  { t: 137.0, fn: () => fade('b4-badge') },
+  { t: 141.0, fn: () => document.getElementById('replay').classList.add('shown') }
 ];
-const TOTAL = 120;
+const TOTAL = 143;
 
 /* ------------------------------------------------------------------
    Helpers
@@ -735,13 +950,12 @@ function typeCmd(id, str, durMs) {
   tick();
 }
 
-function streamLines(bodyId, lines, startDelay, tag) {
+function streamLines(bodyId, lines, startDelay, tag, perLineMs = 900) {
   const body = $(bodyId);
   body.innerHTML = '';
   lines.forEach((line, i) => {
     const div = document.createElement('div');
     div.className = 'sxs-line';
-    // color the first line (the prompt echo) distinctly
     if (i === 0) {
       div.innerHTML = '<span style="color:#C15F3C">&gt; </span>' + escape(line);
     } else if (line === '') {
@@ -750,7 +964,7 @@ function streamLines(bodyId, lines, startDelay, tag) {
       div.textContent = line;
     }
     body.appendChild(div);
-    setTimeout(() => div.classList.add('show-fast'), startDelay * 1000 + i * 900);
+    setTimeout(() => div.classList.add('show-fast'), startDelay * 1000 + i * perLineMs);
   });
 }
 function escape(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
