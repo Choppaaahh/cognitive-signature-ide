@@ -185,7 +185,21 @@ Signature extraction is subjective. A single Opus call can hallucinate traits, o
 - **Signature-Historian** — drift detection across sessions. Branches on `origin` field: `self` gets full drift analysis; `imported` (from `/cogsig import-corpus`) skips drift analysis because cross-user differences are expected.
 - **Advisor** — Anthropic's Claude Advisor pattern (Haiku-executor + Opus-advisor pairing) applied to CogSig. Fires at inflection points: low-confidence extractions, schema soft-fails, conflicting governance reviews, unexplained drift. Returns strategic reframe + suggested action.
 
-On first live run of the code-domain version, Signature-Brutus caught a real factual error in the extraction — claimed "PascalCase reserved for constants" when actual constants were UPPER_SNAKE_CASE. Adversarial governance earned its keep on first try. Advisor self-referential diagnosis on first smoke test: correctly identified that manual-class inflection matched the verify-first trust mechanic in the signature it was reviewing. Governance is the product — visible in pre-demo catches, invisible in default operation.
+### Where the architecture came from
+
+The architecture was derived from problems encountered during extensive Claude Code usage. Every primitive (breadcrumbs / patterns / governance agents / advisor-at-inflection / pattern-promotion thresholds / drift detection / scope-switching / signature export-import) was built in response to a specific failure mode the author hit using Claude. The plugin packages that operational-discipline substrate into a shape any Claude Code user can install.
+
+### Live examples of governance catches during this build
+
+Operational patterns — Functionality 2 — catching defects in this plugin during its own construction:
+
+- **Plugin-loader schema violations** (Day 4) — QA dispatched to verify `plugin.json` against Claude Code's actual loader schema; caught 3 critical gaps (manifest at wrong path, `hooks` field format wrong, `skills` array incomplete). Had QA not caught: `claude plugin install .` would have silent-failed during demo recording. All 3 fixed pre-demo.
+- **Contaminated blind-test prompts** (Day 4) — Brutus dispatched to stress-test 10 directing-domain prompts before any API calls. Caught "yo" contamination in pivot-reply prompt (baseline would auto-produce yo-register, killing differentiation), two prompts isolating too few signature dimensions. 3 swaps applied; post-swap set covered all 7 dimensions cleanly.
+- **Signature factual error** (Day 3, code-domain predecessor) — Signature-Brutus reviewing the first live extraction caught a claim that "PascalCase reserved for constants" when actual constants were UPPER_SNAKE_CASE. Adversarial governance earned its keep on first live run.
+- **Advisor self-referential diagnosis** (Day 3) — advisor's first smoke test correctly identified that the manual-class inflection it was firing on matched the verify-first trust mechanic in the signature it was reviewing. Recursive validation landed first-run.
+- **Type-assumption gap** (Day 3) — QA caught `summarize_context()` assuming `governance_reviews` was a dict; hardened with isinstance guards. Pre-production hardening before the first real conflict-class inflection.
+
+The governance architecture catches defects in its own construction. The plugin's Functionality 2 claim ("operational patterns capture") is demonstrated by the plugin's own build process catching bugs the build-team would have missed. Governance is the product — visible in pre-demo catches, invisible in default operation.
 
 ---
 
