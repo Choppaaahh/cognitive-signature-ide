@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>Cognitive Signature IDE — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAF3E4;
+    --paper-deep: #F3E9D0;
+    --ink: #141413;
+    --ink-soft: #3A342C;
+    --muted: #7C6E57;
+    --rule: #D9CDB3;
+    --panel: #EFE3C6;
+    --amber: #C15F3C;
+    --amber-bright: #D97706;
+    --sage: #5E7A52;
+    --warn: #B8860B;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100vw; height: 100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at top left, rgba(193,95,60,0.04), transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(94,122,82,0.04), transparent 50%);
+    z-index: 1;
+  }
+  .stage {
+    position: relative;
+    width: 100vw; height: 100vh;
+    z-index: 2;
+  }
+  .beat {
+    position: absolute; inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transition: opacity 0.9s ease;
+    pointer-events: none;
+  }
+  .beat.active { opacity: 1; pointer-events: auto; }
+
+  /* --- progress bar --- */
+  .progress {
+    position: fixed; top: 0; left: 0;
+    height: 3px;
+    background: var(--amber);
+    width: 0;
+    z-index: 100;
+    transition: width 0.1s linear;
+  }
+  .brand {
+    position: fixed; top: 22px; right: 32px;
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    z-index: 50;
+    opacity: 0;
+    animation: fadein 0.6s 0.3s forwards;
+  }
+  .brand .sep { color: var(--rule); margin: 0 8px; }
+
+  /* --- BEAT 1: HERO --- */
+  .hero-eyebrow {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    color: var(--amber);
+    margin-bottom: 28px;
+    opacity: 0;
+  }
+  .hero-title {
+    font-family: 'Lora', Georgia, serif;
+    font-weight: 400;
+    font-size: 58px;
+    line-height: 1.25;
+    text-align: center;
+    max-width: 1200px;
+    margin-bottom: 20px;
+    opacity: 0;
+    transform: translateY(14px);
+    color: var(--ink);
+  }
+  .hero-title em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--amber);
+  }
+  .hero-sub {
+    font-size: 22px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    text-align: center;
+    max-width: 1000px;
+    margin-top: 10px;
+    opacity: 0;
+  }
+  .hero-sub .kw {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .hero-sub .voice { color: var(--sage); font-weight: 600; }
+  .hero-sub .op { color: var(--amber); font-weight: 600; }
+
+  .term {
+    margin-top: 56px;
+    background: #1B1815;
+    border: 1px solid #2A251F;
+    border-radius: 10px;
+    width: 820px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(20, 20, 19, 0.12);
+    overflow: hidden;
+    opacity: 0;
+  }
+  .term-bar {
+    padding: 10px 14px;
+    background: #23201B;
+    border-bottom: 1px solid #2E2923;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #E5564A; }
+  .dot.y { background: #E5A84A; }
+  .dot.g { background: #5CB85C; }
+  .term-title {
+    margin-left: 14px;
+    font-size: 11px;
+    color: #9A8E75;
+    letter-spacing: 0.06em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .term-body {
+    padding: 22px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    line-height: 1.75;
+    color: #E7DFCB;
+    min-height: 260px;
+  }
+  .term-prompt { color: #C15F3C; }
+  .term-cmd { color: #F5E6D3; }
+  .term-out { color: #9A8E75; }
+  .term-ok { color: #7FB562; font-weight: 500; }
+  .typed { display: inline-block; white-space: pre; }
+  .cursor {
+    display: inline-block;
+    width: 9px; height: 17px;
+    background: #C15F3C;
+    vertical-align: text-bottom;
+    animation: blink 0.9s infinite;
+  }
+
+  /* --- BEAT 2: SIDE-BY-SIDE --- */
+  .sxs-title {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 8px;
+    opacity: 0;
+  }
+  .sxs-prompt {
+    font-size: 19px;
+    font-style: italic;
+    color: var(--muted);
+    margin-bottom: 36px;
+    max-width: 1100px;
+    text-align: center;
+    opacity: 0;
+    line-height: 1.5;
+  }
+  .sxs-prompt::before { content: '"'; }
+  .sxs-prompt::after { content: '"'; }
+  .sxs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    width: 100%;
+    max-width: 1600px;
+  }
+  .sxs-term {
+    background: #1B1815;
+    border-radius: 10px;
+    border: 1px solid #2A251F;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .sxs-term.naked { border-color: #3A342C; }
+  .sxs-term.cogsig { border-color: var(--amber); box-shadow: 0 0 0 1px rgba(193,95,60,0.3), 0 10px 40px rgba(193,95,60,0.08); }
+  .sxs-term-label {
+    padding: 12px 18px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    background: #23201B;
+    border-bottom: 1px solid #2E2923;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sxs-term.naked .sxs-term-label { color: #9A8E75; }
+  .sxs-term.cogsig .sxs-term-label { color: #E99767; }
+  .sxs-badge {
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.15em;
+  }
+  .sxs-term.naked .sxs-badge { background: #3A342C; color: #9A8E75; }
+  .sxs-term.cogsig .sxs-badge { background: rgba(193,95,60,0.2); color: #E99767; }
+  .sxs-body {
+    padding: 20px 24px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 320px;
+    color: #E7DFCB;
+  }
+  .sxs-line { opacity: 0; }
+  .sxs-caption {
+    margin-top: 36px;
+    font-family: 'Lora', Georgia, serif;
+    font-size: 22px;
+    font-style: italic;
+    color: var(--sage);
+    opacity: 0;
+  }
+  .sxs-caption .em { color: var(--amber); font-style: normal; font-weight: 600; font-family: 'Inter', sans-serif; }
+
+  /* --- BEAT 3: GRID --- */
+  .grid-eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    font-weight: 600;
+    color: var(--amber);
+    margin-bottom: 16px;
+    opacity: 0;
+  }
+  .grid-title {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 40px;
+    font-weight: 500;
+    margin-bottom: 14px;
+    text-align: center;
+    opacity: 0;
+  }
+  .grid-sub {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 900px;
+    text-align: center;
+    margin-bottom: 48px;
+    line-height: 1.5;
+    opacity: 0;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    width: 100%;
+    max-width: 1500px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 22px 26px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .card.real {
+    background: #FFF8E8;
+    border: 1.5px solid var(--amber);
+    box-shadow: 0 6px 30px rgba(193,95,60,0.12);
+  }
+  .card.real .card-label::after {
+    content: 'REAL';
+    background: var(--amber);
+    color: #FFF8E8;
+    margin-left: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    vertical-align: 2px;
+  }
+  .card-label {
+    font-family: 'Lora', Georgia, serif;
+    font-weight: 600;
+    font-size: 19px;
+    color: var(--ink);
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+  .card-row {
+    display: flex;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 6px;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .card-key {
+    color: var(--muted);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    flex-shrink: 0;
+    width: 84px;
+    font-weight: 600;
+    padding-top: 3px;
+  }
+  .card-val { color: var(--ink-soft); font-size: 13px; flex: 1; word-break: break-word; }
+  .card-open {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--rule);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--amber);
+    font-style: italic;
+  }
+  .grid-footer {
+    margin-top: 32px;
+    font-size: 15px;
+    color: var(--sage);
+    font-style: italic;
+    font-family: 'Lora', Georgia, serif;
+    opacity: 0;
+    max-width: 1100px;
+    text-align: center;
+  }
+
+  /* --- BEAT 4: CLOSE --- */
+  .close-eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    font-weight: 600;
+    color: var(--amber);
+    margin-bottom: 18px;
+    opacity: 0;
+  }
+  .close-measure {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 30px 48px;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    margin-bottom: 36px;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .score-big {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 72px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .score-big em {
+    color: var(--amber);
+    font-style: normal;
+  }
+  .score-meta { display: flex; flex-direction: column; gap: 4px; }
+  .score-delta {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--sage);
+  }
+  .score-sub {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 380px;
+    line-height: 1.55;
+  }
+  .catches-title {
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    color: var(--warn);
+    font-weight: 700;
+    margin-bottom: 14px;
+    opacity: 0;
+  }
+  .catches {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 1100px;
+    width: 100%;
+    margin-bottom: 40px;
+  }
+  .catch {
+    background: var(--paper-deep);
+    border-left: 3px solid var(--warn);
+    padding: 10px 16px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateX(-12px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .catch .catch-agent {
+    font-weight: 700;
+    color: var(--warn);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+  .catch .catch-outcome {
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 2px;
+  }
+  .close-tag {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 34px;
+    line-height: 1.35;
+    text-align: center;
+    max-width: 1100px;
+    margin-bottom: 24px;
+    opacity: 0;
+  }
+  .close-tag em { color: var(--amber); font-weight: 500; font-style: italic; }
+  .close-url {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    opacity: 0;
+  }
+  .close-url a { color: var(--amber); text-decoration: none; }
+  .close-badge {
+    margin-top: 12px;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    font-weight: 600;
+    opacity: 0;
+  }
+
+  /* --- universal state animators --- */
+  .show { animation: rise 0.7s ease forwards; }
+  .show-fast { animation: fade 0.5s ease forwards; }
+  .hide { opacity: 0 !important; }
+
+  @keyframes rise {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes fadein {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+  @keyframes card-rise {
+    0% { opacity: 0; transform: translateY(16px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* replay button — shown at end */
+  .replay {
+    position: fixed;
+    bottom: 32px; right: 32px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 12px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.4s, transform 0.2s;
+    z-index: 100;
+  }
+  .replay.shown { opacity: 0.9; }
+  .replay:hover { transform: translateY(-2px); opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="brand">
+  COGNITIVE SIGNATURE IDE <span class="sep">·</span> BUILT WITH OPUS 4.7
+</div>
+
+<div class="stage">
+
+  <!-- BEAT 1: HERO -->
+  <div class="beat" id="beat1">
+    <div class="hero-eyebrow" id="b1-eyebrow">COGNITIVE SIGNATURE IDE</div>
+    <h1 class="hero-title" id="b1-title">
+      Claude quietly <em>syncs to your cognitive signature</em><br>
+      — and stays aligned as you change.
+    </h1>
+    <p class="hero-sub" id="b1-sub">
+      <span class="voice">voice</span> <span style="color:var(--muted)">(directives, conversational flow, idiomatic tells)</span>
+      <span style="color:var(--rule); padding: 0 10px">+</span>
+      <span class="op">operational patterns</span> <span style="color:var(--muted)">(failure modes, reasoning chains, recurring decisions)</span>
+    </p>
+    <div class="term" id="b1-term">
+      <div class="term-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="term-title">first-run setup</span>
+      </div>
+      <div class="term-body">
+        <div><span class="term-prompt">$</span> <span class="term-cmd" id="b1-cmd"></span><span class="cursor" id="b1-cur"></span></div>
+        <div class="typed" id="b1-o1" style="opacity:0">scanning <span style="color:#E7DFCB">~/.claude/projects/</span>...</div>
+        <div class="typed" id="b1-o2" style="opacity:0">found <span style="color:#E7DFCB">123</span> sessions · <span style="color:#E7DFCB">~2,400</span> directives</div>
+        <div class="typed" id="b1-o3" style="opacity:0">extracting VOICE signature via Opus 4.7 (directing domain)...</div>
+        <div class="typed" id="b1-o4" style="opacity:0">extracting OPERATIONAL signature via Opus 4.7 (operational domain)...</div>
+        <div class="typed" id="b1-o5" style="opacity:0"><span class="term-ok">✓ signature active.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEAT 2: SIDE-BY-SIDE -->
+  <div class="beat" id="beat2">
+    <h2 class="sxs-title" id="b2-title">Same prompt. Two Claudes.</h2>
+    <p class="sxs-prompt" id="b2-prompt"></p>
+    <div class="sxs-grid">
+      <div class="sxs-term naked" id="b2-naked">
+        <div class="sxs-term-label">NAKED CLAUDE <span class="sxs-badge">GENERIC</span></div>
+        <div class="sxs-body" id="b2-naked-body"></div>
+      </div>
+      <div class="sxs-term cogsig" id="b2-cogsig">
+        <div class="sxs-term-label">CLAUDE + COGSIG <span class="sxs-badge">MATCHED</span></div>
+        <div class="sxs-body" id="b2-cogsig-body"></div>
+      </div>
+    </div>
+    <p class="sxs-caption" id="b2-caption">
+      Same information. Radically different shape.
+      <span class="em"> Right column matches the user's voice.</span>
+    </p>
+  </div>
+
+  <!-- BEAT 3: GRID -->
+  <div class="beat" id="beat3">
+    <div class="grid-eyebrow" id="b3-eyebrow">ONE PIPELINE · FIVE VOICES</div>
+    <h2 class="grid-title" id="b3-title">Same architecture, visibly-distinct signatures.</h2>
+    <p class="grid-sub" id="b3-sub">
+      Four synthetic personas plus the real user. The same extraction pipeline produces five signatures you can tell apart at a glance.
+    </p>
+    <div class="grid" id="b3-grid"></div>
+    <p class="grid-footer" id="b3-footer">
+      "top of the morning my claudius" is a literal captured opening — extracted from real Claude Code session JSONLs.
+    </p>
+  </div>
+
+  <!-- BEAT 4: CLOSE -->
+  <div class="beat" id="beat4">
+    <div class="close-eyebrow" id="b4-eyebrow">MEASURED · GOVERNED · PROVEN</div>
+    <div class="close-measure" id="b4-measure">
+      <div class="score-big"><em>10</em> <span style="color:var(--muted);font-size:42px">/ 10</span></div>
+      <div class="score-meta">
+        <div class="score-delta">+66.7pp over chance</div>
+        <div class="score-sub">Claude-as-judge, 10 prompts × 3 conditions. Every prediction correct. No human in the loop.</div>
+      </div>
+    </div>
+
+    <div class="catches-title" id="b4-catches-title">GOVERNANCE CATCHES DURING THIS BUILD</div>
+    <div class="catches" id="b4-catches"></div>
+
+    <p class="close-tag" id="b4-tag">
+      Claude quietly syncs to your cognitive signature. <br>
+      <em>Your Claude perma-remembers what's promoted.</em>
+    </p>
+    <p class="close-url" id="b4-url">
+      <a href="https://github.com/Choppaaahh/cognitive-signature-ide">github.com/Choppaaahh/cognitive-signature-ide</a>
+    </p>
+    <p class="close-badge" id="b4-badge">BUILT WITH OPUS 4.7 · MIT · 3 DEPLOY MODES</p>
+  </div>
+
+</div>
+
+<button class="replay" id="replay" onclick="location.reload()">▶ REPLAY</button>
+
+<script>
+/* ------------------------------------------------------------------
+   Embedded data (same JSON the Remotion scaffold consumes)
+   ------------------------------------------------------------------ */
+const DATA = {
+  sideBySide: {
+    prompt: "draft me a quick reply to the team explaining why we're pivoting the build mid-sprint. 3 sentences max.",
+    nakedLines: [
+      "Here's a draft reply:",
+      "",
+      "Hi team,",
+      "I wanted to update you on a change to our build",
+      "direction. After careful consideration and review of",
+      "recent feedback, we've decided to pivot our approach.",
+      "The main drivers for this decision are three key",
+      "factors that have emerged from our recent iteration",
+      "cycle.",
+      "",
+      "Please let me know if you have questions.",
+      "Best regards."
+    ],
+    cogsigLines: [
+      "yo team quick one:",
+      "",
+      "pivoting the build — OG code-sig assumed user",
+      "authors their own code, but for heavy Claude users",
+      "that breaks. directing-signature captures what the",
+      "user actually contributes — cleaner target.",
+      "3 deploy modes stand.",
+      "",
+      "full writeup tmr."
+    ]
+  },
+  personas: [
+    { label: "Alice — terse engineer",    vocab: "wdyt · lgtm · yolo · yagni",       compression: "55 chars (extreme-terse)",  energy: "neutral",            style: "command, terse",         open: "lgtm, ship it",                    real: false },
+    { label: "Bob — verbose PM",          vocab: "circling back · loop in · scope",  compression: "180 chars (moderate)",      energy: "neutral sentence-case", style: "question, moderate",     open: "Thanks so much for the update, team", real: false },
+    { label: "Tim — casual lowercase",    vocab: "u · ur · rn · lil · kinda",        compression: "95 chars (terse)",          energy: "variable",           style: "mixed, lowercase",       open: "idk tbh",                          real: false },
+    { label: "Sue — formal academic",     vocab: "pursuant to · behooves · posit",   compression: "175 chars (verbose)",       energy: "low, formal",        style: "verbose, formal",        open: "Kindly furnish",                   real: false },
+    { label: "Flex — the real user",      vocab: "laddy · buddy · claudi · hellyea", compression: "420 chars (verbose)",       energy: "high",               style: "mixed, lowercase-casual",open: "top of the morning my claudius",   real: true  }
+  ],
+  catches: [
+    { agent: "QA · Day 2",              catch: "Plugin loader schema violations caught pre-demo: 3 critical gaps",      outcome: "claude plugin install would have silent-failed; all 3 fixed before any public action" },
+    { agent: "Brutus · Day 2",          catch: "Contaminated blind-test prompts caught pre-API-calls",                  outcome: "3 swaps applied before 30 Opus calls fired; measurement methodology preserved" },
+    { agent: "Signature-Brutus · Day 1", catch: "Signature factual error on first live extraction",                     outcome: "adversarial governance caught a real mistake on first run" },
+    { agent: "Advisor · Day 1",         catch: "Self-referential diagnosis on first smoke test",                        outcome: "advisor identified its own firing-trigger matched the signature it was reviewing" },
+    { agent: "Brutus · Day 2 F2",        catch: "Operational schema stress-tested pre-wire",                            outcome: "2 dimensions removed, 1 added, frequency enum replaced with instance_count+evidence_list" }
+  ]
+};
+
+/* ------------------------------------------------------------------
+   Timeline (seconds)
+   Total: 120s (2:00)
+   ------------------------------------------------------------------ */
+const TIMELINE = [
+  // --- BEAT 1: HERO (0 - 24s) ---
+  { t: 0.0,  fn: () => activate('beat1') },
+  { t: 0.5,  fn: () => rise('b1-eyebrow') },
+  { t: 1.2,  fn: () => rise('b1-title') },
+  { t: 3.2,  fn: () => rise('b1-sub') },
+  { t: 6.0,  fn: () => rise('b1-term') },
+  { t: 7.0,  fn: () => typeCmd('b1-cmd', '/cogsig init --yes', 1200) },
+  { t: 9.0,  fn: () => { hide('b1-cur'); fade('b1-o1'); } },
+  { t: 10.5, fn: () => fade('b1-o2') },
+  { t: 12.5, fn: () => fade('b1-o3') },
+  { t: 14.5, fn: () => fade('b1-o4') },
+  { t: 17.0, fn: () => fade('b1-o5') },
+
+  // --- BEAT 2: SIDE-BY-SIDE (24 - 70s) ---
+  { t: 22.0, fn: () => deactivate('beat1') },
+  { t: 23.0, fn: () => activate('beat2') },
+  { t: 23.5, fn: () => rise('b2-title') },
+  { t: 24.8, fn: () => { text('b2-prompt', DATA.sideBySide.prompt); fade('b2-prompt'); } },
+  { t: 27.5, fn: () => rise('b2-naked') },
+  { t: 28.0, fn: () => rise('b2-cogsig') },
+  { t: 29.5, fn: () => streamLines('b2-naked-body', DATA.sideBySide.nakedLines, 1.2, 'n') },
+  { t: 29.5, fn: () => streamLines('b2-cogsig-body', DATA.sideBySide.cogsigLines, 1.2, 'c') },
+  { t: 60.0, fn: () => rise('b2-caption') },
+
+  // --- BEAT 3: GRID (70 - 95s) ---
+  { t: 68.0, fn: () => deactivate('beat2') },
+  { t: 69.0, fn: () => activate('beat3') },
+  { t: 69.5, fn: () => fade('b3-eyebrow') },
+  { t: 70.5, fn: () => rise('b3-title') },
+  { t: 72.0, fn: () => fade('b3-sub') },
+  { t: 74.0, fn: () => renderGrid() },
+  { t: 90.0, fn: () => fade('b3-footer') },
+
+  // --- BEAT 4: CLOSE (95 - 120s) ---
+  { t: 93.5, fn: () => deactivate('beat3') },
+  { t: 94.5, fn: () => activate('beat4') },
+  { t: 95.0, fn: () => fade('b4-eyebrow') },
+  { t: 96.0, fn: () => rise('b4-measure') },
+  { t: 100.0, fn: () => fade('b4-catches-title') },
+  { t: 100.5, fn: () => renderCatches() },
+  { t: 111.0, fn: () => rise('b4-tag') },
+  { t: 113.5, fn: () => fade('b4-url') },
+  { t: 115.0, fn: () => fade('b4-badge') },
+  { t: 119.0, fn: () => document.getElementById('replay').classList.add('shown') }
+];
+const TOTAL = 120;
+
+/* ------------------------------------------------------------------
+   Helpers
+   ------------------------------------------------------------------ */
+function $(id) { return document.getElementById(id); }
+function activate(id) { $(id).classList.add('active'); }
+function deactivate(id) { $(id).classList.remove('active'); }
+function rise(id) { const el = $(id); if (el) el.classList.add('show'); }
+function fade(id) { const el = $(id); if (el) el.classList.add('show-fast'); }
+function hide(id) { const el = $(id); if (el) el.classList.add('hide'); }
+function text(id, t) { $(id).textContent = t; }
+
+function typeCmd(id, str, durMs) {
+  const el = $(id);
+  const per = durMs / str.length;
+  let i = 0;
+  const tick = () => {
+    if (i > str.length) return;
+    el.textContent = str.slice(0, i++);
+    setTimeout(tick, per);
+  };
+  tick();
+}
+
+function streamLines(bodyId, lines, startDelay, tag) {
+  const body = $(bodyId);
+  body.innerHTML = '';
+  lines.forEach((line, i) => {
+    const div = document.createElement('div');
+    div.className = 'sxs-line';
+    // color the first line (the prompt echo) distinctly
+    if (i === 0) {
+      div.innerHTML = '<span style="color:#C15F3C">&gt; </span>' + escape(line);
+    } else if (line === '') {
+      div.innerHTML = '&nbsp;';
+    } else {
+      div.textContent = line;
+    }
+    body.appendChild(div);
+    setTimeout(() => div.classList.add('show-fast'), startDelay * 1000 + i * 900);
+  });
+}
+function escape(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderGrid() {
+  const g = $('b3-grid');
+  g.innerHTML = '';
+  DATA.personas.forEach((p, i) => {
+    const c = document.createElement('div');
+    c.className = 'card' + (p.real ? ' real' : '');
+    c.innerHTML =
+      `<div class="card-label">${p.label}</div>
+       <div class="card-row"><div class="card-key">VOCAB</div><div class="card-val">${p.vocab}</div></div>
+       <div class="card-row"><div class="card-key">SHAPE</div><div class="card-val">${p.compression}</div></div>
+       <div class="card-row"><div class="card-key">ENERGY</div><div class="card-val">${p.energy}</div></div>
+       <div class="card-row"><div class="card-key">STYLE</div><div class="card-val">${p.style}</div></div>
+       <div class="card-open">"${p.open}"</div>`;
+    g.appendChild(c);
+    setTimeout(() => {
+      c.style.animation = 'card-rise 0.7s ease forwards';
+    }, i * 500);
+  });
+}
+
+function renderCatches() {
+  const box = $('b4-catches');
+  box.innerHTML = '';
+  DATA.catches.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'catch';
+    div.innerHTML = `<span class="catch-agent">${c.agent}</span> — ${c.catch}<div class="catch-outcome">${c.outcome}</div>`;
+    box.appendChild(div);
+    setTimeout(() => {
+      div.style.opacity = '1';
+      div.style.transform = 'translateX(0)';
+    }, i * 1500);
+  });
+}
+
+/* ------------------------------------------------------------------
+   Runtime
+   ------------------------------------------------------------------ */
+const start = performance.now();
+const events = TIMELINE.slice();
+const progressBar = $('progress');
+
+function loop(now) {
+  const t = (now - start) / 1000;
+  progressBar.style.width = Math.min(100, (t / TOTAL) * 100) + '%';
+  while (events.length && events[0].t <= t) {
+    const ev = events.shift();
+    try { ev.fn(); } catch (e) { console.error('timeline event failed', ev, e); }
+  }
+  if (t < TOTAL + 2) requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

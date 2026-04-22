@@ -1,31 +1,48 @@
-# CogSig Demo Video — Remotion
+# CogSig Demo Video
 
-Programmatic 1920×1080 demo video, ~2:30 total, 4 beats.
+Two paths, same 4 beats, ~2:00 total.
 
 **Built with Opus 4.7 hackathon submission (Cerebral Valley + Anthropic).** Data-bound to real signature outputs from the parent repo — the video is literally rendered FROM the pipeline it describes.
 
-## Beats
+## Path A — zero-install HTML (recommended for screen-recording)
 
-| Beat | Duration | Content |
-|------|----------|---------|
-| 1. Hero | 0:00–0:25 | Tagline fade-in, install command with streaming output, "signature active" |
-| 2. Side-by-side | 0:25–1:25 | Same prompt, two terminals (naked vs CogSig), response delta live |
-| 3. Grid | 1:25–2:00 | 5-persona signature grid (4 synthetic + real), cards animate in staggered |
-| 4. Close | 2:00–2:30 | Auto-scorer 100% card, governance-catches scroll (5 real catches), final tagline + URL |
+Open `demo.html` in any modern browser. Auto-plays on load, 2:00 runtime, replay button at the end. Anthropic-aesthetic design language: warm sepia paper palette, Lora serif headlines, Inter sans body, JetBrains Mono terminals.
 
-## Install + preview
+```bash
+# Linux / macOS
+xdg-open demo.html   # or: open demo.html
+
+# Windows
+start demo.html
+```
+
+**Screen-record tips:**
+- Maximize the browser window to 1920×1080 (or whatever your recording resolution is)
+- Hit `F11` for fullscreen — hides browser chrome
+- Loom / OBS / QuickTime — record the whole window
+- Don't start recording until auto-play begins (wait ~1s after page load)
+
+No node, no npm, no build step. Single file. Same data the Remotion version consumes.
+
+## Path B — programmatic Remotion render (if you want MP4 out)
+
+Requires Node.js 18+ (`winget install OpenJS.NodeJS.LTS` on Windows). Not needed if you use Path A.
 
 ```bash
 cd demo-video
 npm install
 npm run dev          # opens Remotion Studio at http://localhost:3000
-```
-
-## Render MP4
-
-```bash
 npm run build        # renders to out/demo.mp4 (h264, 1080p30)
 ```
+
+## Beats (both paths)
+
+| Beat | Approx window | Content |
+|------|---------------|---------|
+| 1. Hero | 0:00–0:22 | Tagline fade-in, install command typing, extraction output, "signature active" |
+| 2. Side-by-side | 0:22–1:08 | Same prompt, two terminals (naked vs CogSig), response delta streams |
+| 3. Grid | 1:08–1:35 | 5-persona signature grid (4 synthetic + real), cards rise staggered |
+| 4. Close | 1:35–2:00 | Auto-scorer 10/10 card, governance-catches scroll (5 real catches), final tagline + URL |
 
 ## Structure
 
