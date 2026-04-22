@@ -184,12 +184,27 @@ Same information. Radically different shape. The right column matches the user's
 
 ## Governance — the three agents, the one advisor
 
-Signature extraction is subjective. A single Opus call can hallucinate traits, over-generalize from sparse evidence, or drift. Four roles close that gap:
+Signature extraction is subjective. A single Opus call can hallucinate traits, over-generalize from sparse evidence, or drift. Four roles close that gap — and each agent is **dual-function**: it ships for signature governance AND is available as a general-purpose specialist the user can summon for any work.
 
-- **Signature-Brutus** — adversarial: "does this signature actually match the samples, or is it inventing traits?"
-- **Signature-QA** — schema validation before signature reaches inject
-- **Signature-Historian** — drift detection across sessions. Branches on `origin` field: `self` gets full drift analysis; `imported` (from `/cogsig import-corpus`) skips drift analysis because cross-user differences are expected.
+- **Brutus** — adversarial reviewer (Opus). **Function 1**: "does this signature actually match the samples, or is it inventing traits?" **Function 2**: general-purpose — invoke for code review, design decisions, math/EV claim validation, paper-method stress-test, pre-deploy "what's the worst that could happen." Verdict categories: `KILL / REWORK / PASS-WITH-CAVEATS / PASS`.
+
+- **QA** — quality assurance (Haiku). **Function 1**: schema validation on `signature.json` before inject. **Function 2**: general-purpose — Python compile + import check, dead-code audit, silent-failure detection (bare excepts / swallowed exceptions), schema validation for any JSON, pre-deploy gate audits. Verdict categories: `CLEAN / FIXABLE-IN-30MIN / BLOCKER`.
+
+- **Historian** — drift & evolution tracker (Sonnet). **Function 1**: detects dimension-level drift across signature history (branches on `origin`: `self` vs `imported`). **Function 2**: general-purpose — config drift across sessions, decision diary compaction, metric-trend classification (stable/drifting/oscillating), architecture evolution, retrospectives. Output: `EXPECTED / UNEXPLAINED / NOISE` classification per change + a one-sentence through-line.
+
 - **Advisor** — Anthropic's Claude Advisor pattern (Haiku-executor + Opus-advisor pairing) applied to CogSig. Fires at inflection points: low-confidence extractions, schema soft-fails, conflicting governance reviews, unexplained drift. Returns strategic reframe + suggested action.
+
+### Summoning the agents (general-purpose mode)
+
+At your Claude Code prompt:
+```
+brutus review this function for silent-failure paths
+qa compile-check all 3 files I just edited
+historian compare this config to last 5 sessions
+```
+The agents are registered at plugin install — no additional setup. Each reads its own invocation context and picks the correct function (signature-mode vs general-mode). The signature-governance pathway still fires automatically from the CogSig pipeline; the general-purpose pathway is user-invoked.
+
+**The architecture we used to build this plugin is the architecture we ship.** Every fix we applied pre-submission went through the same brutus+qa loop that's now installed on your machine.
 
 ### Where the architecture came from
 

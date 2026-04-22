@@ -43,9 +43,19 @@ A Claude Code plugin with **two functionalities on one pipeline**:
 
 ## What was built with Claude Opus 4.7
 
-**Everything.** 27+ public commits, ~7,300 lines across 8 skills (init, capture, extract, inject, toggle, import, export, review, advisor), 16 Python files, Remotion + zero-install HTML demo (2 paths), measurement suite, managed-agents integration, hooks, 4 governance agents (Brutus / QA / Historian / Archivist).
+**Everything.** 27+ public commits, ~7,300 lines across 8 skills (init, capture, extract, inject, toggle, import, export, review, advisor), 16 Python files, Remotion + zero-install HTML demo (2 paths), measurement suite, managed-agents integration, hooks, 3 dual-function governance subagents (brutus / qa / historian).
 
 Independent adversarial review loops built into the workflow: every pattern promotion passed Brutus + QA before shipping. 7 pre-submission error-path fixes applied from final sweep.
+
+## Shipped subagent infra (dual-function)
+
+The 3 governance agents aren't scoped to signature review — they're **dual-function**. Each one serves its signature-governance role AND is available as a general-purpose specialist the user can summon for any work:
+
+- **brutus** (Opus) — adversarial code/decision/math reviewer. `KILL / REWORK / PASS-WITH-CAVEATS / PASS`
+- **qa** (Haiku) — schema + compile + dead-code + silent-failure auditor. `CLEAN / FIXABLE-IN-30MIN / BLOCKER`
+- **historian** (Sonnet) — drift/change/evolution tracker. `EXPECTED / UNEXPLAINED / NOISE`
+
+Summoned at the Claude Code prompt: `brutus review this function`, `qa compile-check files`, `historian compare this config to last 5 sessions`. The architecture we used to build this plugin is the architecture we ship.
 
 ---
 
