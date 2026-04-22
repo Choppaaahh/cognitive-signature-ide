@@ -189,6 +189,12 @@ Signature extraction is subjective. A single Opus call can hallucinate traits, o
 
 The architecture was derived from problems encountered during extensive Claude Code usage. Every primitive (breadcrumbs / patterns / governance agents / advisor-at-inflection / pattern-promotion thresholds / drift detection / scope-switching / signature export-import) was built in response to a specific failure mode the author hit using Claude. The plugin packages that operational-discipline substrate into a shape any Claude Code user can install.
 
+### Research foundation
+
+The contribution-vs-output insight — that in LLM-coupled workflows, user output is joint-authored and the isolable user signal lives in directives rather than artifacts — wasn't theorized for this hackathon. It was discovered by iterating the plugin and watching signature extraction fail cleanly on code outputs that the author hadn't typed, then on prose outputs that the author had edited-but-not-authored. The pivot from code-signature → writing-signature → directing-signature each happened because the empirical data showed the corpus choice was wrong. The architecture describes its own correct target under honest testing.
+
+The governance + advisor pairing is the operational translation of Anthropic's Claude Advisor pattern (Haiku-executor + Opus-advisor) applied to signature review. The pattern-promotion threshold (`n=2` auto-promote, governance-gated) compresses a multi-session cognitive-scaffolding architecture the author has run as an N=1 research substrate across a long-running project — distilled into a plugin-scale version any Claude Code user can install. The 100% auto-scorer accuracy on the N=10 directing-signature blind test (see *Measurement*) is the empirical validation: signatures extracted from this architecture carry observable, reproducible features detectable without human scoring.
+
 ### Live examples of governance catches during this build
 
 Operational patterns — Functionality 2 — catching defects in this plugin during its own construction:
