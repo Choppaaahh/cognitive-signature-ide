@@ -384,6 +384,140 @@
   }
   .op-footer .em { color: var(--amber); font-family: 'Inter', sans-serif; font-weight: 600; font-style: normal; }
 
+  /* --- BEAT 2.75: HOW IT WORKS --- */
+  .how-eyebrow {
+    font-size: 13px; letter-spacing: 0.3em; font-weight: 600;
+    color: var(--amber); margin-bottom: 10px; opacity: 0;
+  }
+  .how-title {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 36px; font-weight: 500;
+    margin-bottom: 6px; text-align: center; opacity: 0;
+  }
+  .how-sub {
+    font-size: 17px; color: var(--muted);
+    font-style: italic; margin-bottom: 28px;
+    text-align: center; opacity: 0;
+  }
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: 100%; max-width: 1500px;
+  }
+  .how-panel {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 20px 24px;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .how-panel-title {
+    font-family: 'Lora', Georgia, serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .how-panel-sub {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 18px;
+    font-style: italic;
+  }
+  .agent-row {
+    display: flex;
+    gap: 14px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--paper-deep);
+    border-radius: 5px;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .agent-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--amber);
+    width: 80px;
+    flex-shrink: 0;
+  }
+  .agent-model {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    padding-top: 3px;
+    width: 50px;
+    flex-shrink: 0;
+  }
+  .agent-role {
+    flex: 1;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+  .agent-role .invoke {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--sage);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    margin-bottom: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .flow-arrow {
+    color: var(--amber);
+    font-size: 14px;
+    margin: 0 auto;
+    padding: 2px 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    text-align: center;
+    width: 100%;
+  }
+  .flow-file {
+    color: var(--ink);
+    font-weight: 600;
+    padding: 4px 10px;
+    background: var(--paper-deep);
+    border-radius: 4px;
+    border-left: 3px solid var(--amber);
+    width: 100%;
+  }
+  .flow-file.persists {
+    border-left-color: var(--sage);
+    background: rgba(94,122,82,0.08);
+  }
+  .flow-file .fn {
+    color: var(--amber);
+  }
+  .flow-file.persists .fn {
+    color: var(--sage);
+  }
+  .flow-file .note {
+    color: var(--muted);
+    font-size: 10.5px;
+    font-style: italic;
+    font-weight: 400;
+    display: block;
+    margin-top: 1px;
+  }
+
   .op-modes-switch {
     margin-top: 12px;
     font-size: 11.5px;
@@ -937,6 +1071,79 @@
     </p>
   </div>
 
+  <!-- BEAT 2.75: HOW IT WORKS (subagents + pattern storage) -->
+  <div class="beat" id="beat275">
+    <div class="how-eyebrow" id="b275-eye">HOW IT WORKS · TWO MECHANISMS</div>
+    <h2 class="how-title" id="b275-title">Installed with the plugin.</h2>
+    <p class="how-sub" id="b275-sub">Pre-configured review team + honest persistence — no magic, just files on disk reloaded every session.</p>
+
+    <div class="how-grid">
+      <!-- Subagents panel -->
+      <div class="how-panel" id="b275-agents-panel">
+        <div class="how-panel-title">3 dual-function subagents</div>
+        <div class="how-panel-sub">Each one governs signature extraction + invokable for any work</div>
+        <div class="agent-row" id="b275-agent-1">
+          <div class="agent-name">brutus</div>
+          <div class="agent-model">OPUS</div>
+          <div class="agent-role">
+            adversarial review · KILL / REWORK / PASS verdicts
+            <span class="invoke">brutus review this function for silent-failure paths</span>
+          </div>
+        </div>
+        <div class="agent-row" id="b275-agent-2">
+          <div class="agent-name">qa</div>
+          <div class="agent-model">HAIKU</div>
+          <div class="agent-role">
+            compile · dead-code · schema · silent-failure audit
+            <span class="invoke">qa compile-check all 3 files I just edited</span>
+          </div>
+        </div>
+        <div class="agent-row" id="b275-agent-3">
+          <div class="agent-name">historian</div>
+          <div class="agent-model">SONNET</div>
+          <div class="agent-role">
+            drift · evolution · EXPECTED / UNEXPLAINED / NOISE classification
+            <span class="invoke">historian compare this config to last 5 sessions</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pattern storage flow panel -->
+      <div class="how-panel" id="b275-flow-panel">
+        <div class="how-panel-title">Pattern storage flow</div>
+        <div class="how-panel-sub">Extract → diff vs permanent → user approves → reloaded every session</div>
+
+        <div class="flow-step" id="b275-step-1">
+          <div class="flow-file">
+            <span class="fn">extract</span> → writes <code>signature.&lt;scope&gt;-operational.json</code>
+            <span class="note">raw candidate patterns (ephemeral)</span>
+          </div>
+        </div>
+        <div class="flow-arrow" id="b275-arrow-1">↓ diff vs permanent</div>
+        <div class="flow-step" id="b275-step-2">
+          <div class="flow-file">
+            <span class="fn">refresh-queue</span> → writes <code>pending_patterns.&lt;scope&gt;.json</code>
+            <span class="note">new items only · n≥2 instance gate</span>
+          </div>
+        </div>
+        <div class="flow-arrow" id="b275-arrow-2">↓ /cogsig approve &lt;id&gt;</div>
+        <div class="flow-step" id="b275-step-3">
+          <div class="flow-file persists">
+            <span class="fn">signature.&lt;scope&gt;-operational.permanent.json</span>
+            <span class="note">✓ PERSISTS ON DISK · the source of truth</span>
+          </div>
+        </div>
+        <div class="flow-arrow" id="b275-arrow-3">↓ every new session</div>
+        <div class="flow-step" id="b275-step-4">
+          <div class="flow-file persists">
+            <span class="fn">inject</span> reads permanent → Claude's context prefix
+            <span class="note">no memory needed · re-read every time</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- BEAT 3: GRID -->
   <div class="beat" id="beat3">
     <div class="grid-eyebrow" id="b3-eyebrow">ONE PIPELINE · FIVE VOICES</div>
@@ -1121,37 +1328,58 @@ const TIMELINE = [
   { t: 75.5, fn: () => fade('b25-switch') },
   { t: 78.5, fn: () => fade('b25-footer') },
 
-  // --- BEAT 3: GRID (88 - 110s) ---
-  { t: 86.5, fn: () => deactivate('beat25') },
-  { t: 87.5, fn: () => activate('beat3') },
-  { t: 88.0, fn: () => fade('b3-eyebrow') },
-  { t: 89.0, fn: () => rise('b3-title') },
-  { t: 90.2, fn: () => fade('b3-sub') },
-  { t: 92.0, fn: () => renderGrid() },
-  { t: 106.0, fn: () => fade('b3-footer') },
+  // --- BEAT 2.75: HOW IT WORKS (87 - 106s) ---
+  { t: 85.5, fn: () => deactivate('beat25') },
+  { t: 86.5, fn: () => activate('beat275') },
+  { t: 87.0, fn: () => fade('b275-eye') },
+  { t: 88.0, fn: () => rise('b275-title') },
+  { t: 89.2, fn: () => fade('b275-sub') },
+  { t: 90.5, fn: () => rise('b275-agents-panel') },
+  { t: 91.5, fn: () => rise('b275-flow-panel') },
+  // Agent rows (left panel)
+  { t: 92.5, fn: () => slideIn('b275-agent-1') },
+  { t: 93.3, fn: () => slideIn('b275-agent-2') },
+  { t: 94.1, fn: () => slideIn('b275-agent-3') },
+  // Flow steps (right panel)
+  { t: 93.0, fn: () => slideIn('b275-step-1') },
+  { t: 94.0, fn: () => fadeArrow('b275-arrow-1') },
+  { t: 94.8, fn: () => slideIn('b275-step-2') },
+  { t: 95.8, fn: () => fadeArrow('b275-arrow-2') },
+  { t: 96.6, fn: () => slideIn('b275-step-3') },
+  { t: 97.6, fn: () => fadeArrow('b275-arrow-3') },
+  { t: 98.4, fn: () => slideIn('b275-step-4') },
 
-  // --- BEAT 4: CLOSE + SAMPLES + BUILDER (110 - 152s) ---
-  { t: 109.0, fn: () => deactivate('beat3') },
-  { t: 110.0, fn: () => activate('beat4') },
-  { t: 110.5, fn: () => fade('b4-eyebrow') },
-  { t: 111.5, fn: () => rise('b4-measure') },
-  { t: 115.0, fn: () => fade('b4-catches-title') },
-  { t: 115.5, fn: () => renderCatches() },
-  { t: 124.0, fn: () => rise('b4-tag') },
-  { t: 126.5, fn: () => fade('b4-url') },
-  { t: 128.0, fn: () => fade('b4-badge') },
+  // --- BEAT 3: GRID (107 - 128s) ---
+  { t: 105.5, fn: () => deactivate('beat275') },
+  { t: 106.5, fn: () => activate('beat3') },
+  { t: 107.0, fn: () => fade('b3-eyebrow') },
+  { t: 108.0, fn: () => rise('b3-title') },
+  { t: 109.2, fn: () => fade('b3-sub') },
+  { t: 111.0, fn: () => renderGrid() },
+  { t: 124.0, fn: () => fade('b3-footer') },
+
+  // --- BEAT 4: CLOSE + SAMPLES + BUILDER (127 - 167s) ---
+  { t: 126.5, fn: () => deactivate('beat3') },
+  { t: 127.5, fn: () => activate('beat4') },
+  { t: 128.0, fn: () => fade('b4-eyebrow') },
+  { t: 129.0, fn: () => rise('b4-measure') },
+  { t: 132.5, fn: () => fade('b4-catches-title') },
+  { t: 133.0, fn: () => renderCatches() },
+  { t: 141.5, fn: () => rise('b4-tag') },
+  { t: 144.0, fn: () => fade('b4-url') },
+  { t: 145.5, fn: () => fade('b4-badge') },
   // Sample patterns (more from my signature)
-  { t: 129.5, fn: () => fade('b4-s-eye') },
-  { t: 130.5, fn: () => fade('b4-s-title') },
-  { t: 131.5, fn: () => rise('b4-sample-1') },
-  { t: 132.2, fn: () => rise('b4-sample-2') },
-  { t: 132.9, fn: () => rise('b4-sample-3') },
-  { t: 133.6, fn: () => rise('b4-sample-4') },
+  { t: 147.0, fn: () => fade('b4-s-eye') },
+  { t: 148.0, fn: () => fade('b4-s-title') },
+  { t: 149.0, fn: () => rise('b4-sample-1') },
+  { t: 149.7, fn: () => rise('b4-sample-2') },
+  { t: 150.4, fn: () => rise('b4-sample-3') },
+  { t: 151.1, fn: () => rise('b4-sample-4') },
   // Builder card (full-rainbow)
-  { t: 137.0, fn: () => rise('b4-builder') },
-  { t: 148.0, fn: () => document.getElementById('replay').classList.add('shown') }
+  { t: 154.5, fn: () => rise('b4-builder') },
+  { t: 165.0, fn: () => document.getElementById('replay').classList.add('shown') }
 ];
-const TOTAL = 150;
+const TOTAL = 167;
 
 /* ------------------------------------------------------------------
    Helpers
@@ -1163,6 +1391,17 @@ function rise(id) { const el = $(id); if (el) el.classList.add('show'); }
 function fade(id) { const el = $(id); if (el) el.classList.add('show-fast'); }
 function hide(id) { const el = $(id); if (el) el.classList.add('hide'); }
 function text(id, t) { $(id).textContent = t; }
+function slideIn(id) {
+  const el = $(id);
+  if (!el) return;
+  el.style.opacity = '1';
+  el.style.transform = 'translateX(0)';
+}
+function fadeArrow(id) {
+  const el = $(id);
+  if (!el) return;
+  el.style.opacity = '0.7';
+}
 
 function typeCmd(id, str, durMs) {
   const el = $(id);
