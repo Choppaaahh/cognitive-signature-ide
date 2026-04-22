@@ -166,6 +166,17 @@ def signature_path_for_scope(repo: Path, scope_name: str) -> Path:
     return repo / filename
 
 
+def _load_advisor():
+    """Lazy-import advisor module; returns (consult, should_consult) or (None, None) if unavailable."""
+    try:
+        advisor_dir = Path(__file__).resolve().parent.parent / "advisor"
+        sys.path.insert(0, str(advisor_dir))
+        from advisor import consult, should_consult  # type: ignore
+        return consult, should_consult
+    except ImportError:
+        return None, None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Call Opus 4.7 on samples → signature.json")
     ap.add_argument("--repo", type=Path, default=Path.cwd())
@@ -176,6 +187,10 @@ def main() -> int:
     ap.add_argument("--samples", type=Path, default=None)
     ap.add_argument("--schema", type=Path, default=None)
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--advisor", choices=["auto", "always", "off"], default="auto",
+                    help="Advisor consultation: auto (on inflection), always (every run), off (never).")
+    ap.add_argument("--advisor-threshold", type=float, default=0.5,
+                    help="Confidence threshold below which advisor is consulted in auto mode.")
     args = ap.parse_args()
 
     repo = args.repo.resolve()
@@ -184,6 +199,7 @@ def main() -> int:
     schema_path = args.schema or (repo / "skills" / "extract" / schema_name)
     out_path = args.out or signature_path_for_scope(repo, args.scope_name)
     history_path = repo / ".signature-cache" / ("signature_history.jsonl" if args.scope_name == "default" else f"signature_history.{args.scope_name}.jsonl")
+    advisor_dir = repo / ".signature-cache" / "advisor_reports"
 
     if not samples_path.exists():
         print(f"error: {samples_path} missing — run capture first", file=sys.stderr)
@@ -203,6 +219,45 @@ def main() -> int:
             print(f"  - {e}", file=sys.stderr)
         print("(signature still written; route to Signature-QA for review)", file=sys.stderr)
 
+    advisor_report = None
+    if args.advisor != "off":
+        consult, should_consult = _load_advisor()
+        if consult is None:
+            print("warn: advisor module unavailable; skipping", file=sys.stderr)
+        else:
+            if args.advisor == "always":
+                trigger, inflection_class = True, "manual"
+            else:
+                trigger, inflection_class = should_consult(signature, errors, threshold=args.advisor_threshold)
+            if trigger:
+                samples_doc = json.loads(samples_path.read_text(encoding="utf-8"))
+                low_conf = [n for n, v in signature.get("dimensions", {}).items()
+                            if isinstance(v, dict) and isinstance(v.get("confidence"), (int, float))
+                            and v["confidence"] < args.advisor_threshold]
+                context = {
+                    "signature": signature,
+                    "samples_summary": f"{samples_doc.get('sample_count', '?')} samples, "
+                                       f"scope={samples_doc.get('scope', 'default')}, "
+                                       f"domain={args.domain}, languages={samples_doc.get('languages', [])}",
+                    "low_confidence_dimensions": low_conf,
+                    "validation_errors": errors,
+                }
+                print(f"\n* advisor consulted (class: {inflection_class}) *", file=sys.stderr)
+                try:
+                    advisor_report = consult(context, inflection_class, model=args.model)
+                    advisor_dir.mkdir(parents=True, exist_ok=True)
+                    stamp = advisor_report.get("consulted_ts", datetime.now(timezone.utc).isoformat()).replace(":", "").replace("-", "")[:15]
+                    advisor_out = advisor_dir / f"advisor-{args.scope_name}-{stamp}.json"
+                    advisor_out.write_text(json.dumps(advisor_report, indent=2), encoding="utf-8")
+                    signature["_advisor_consulted"] = {
+                        "inflection_class": inflection_class,
+                        "report_path": str(advisor_out.relative_to(repo)),
+                        "reframe": advisor_report.get("reframe"),
+                        "suggested_action": advisor_report.get("suggested_action"),
+                    }
+                except Exception as e:
+                    print(f"warn: advisor call failed: {e}", file=sys.stderr)
+
     out_path.write_text(json.dumps(signature, indent=2), encoding="utf-8")
     history_path.parent.mkdir(parents=True, exist_ok=True)
     with history_path.open("a", encoding="utf-8") as f:
@@ -215,6 +270,11 @@ def main() -> int:
         conf = val.get("confidence", "?")
         hint = val.get("primary_style") or val.get("preference") or val.get("try_except_style") or val.get("nesting_depth") or ""
         print(f"  {dim}: {hint} (conf {conf})")
+    if advisor_report:
+        print("--- advisor reframe ---")
+        print(f"  reframe: {advisor_report.get('reframe')}")
+        print(f"  suggested action: {advisor_report.get('suggested_action')}")
+        print(f"  diagnosis: {advisor_report.get('diagnosis')}")
 
     return 0 if not errors else 3
 
