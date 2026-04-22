@@ -6,6 +6,9 @@ signature_export*.json
 measurement/blind_outputs/
 measurement/blind_outputs_directing/
 measurement/blind_view.md
+measurement/blind_view_directing.md
+measurement/results_auto_directing.json
+measurement/results_auto.json
 *.log
 __pycache__/
 *.pyc
