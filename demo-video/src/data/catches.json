@@ -1,0 +1,29 @@
+{
+  "catches": [
+    {
+      "agent": "QA (Day 2)",
+      "catch_": "Plugin loader schema violations caught pre-demo: 3 critical gaps",
+      "outcome": "claude plugin install . would have silent-failed; all 3 fixed before any public action"
+    },
+    {
+      "agent": "Brutus (Day 2)",
+      "catch_": "Contaminated blind-test prompts caught pre-API-calls",
+      "outcome": "3 swaps applied before 30 Opus calls fired; measurement methodology preserved"
+    },
+    {
+      "agent": "Signature-Brutus (Day 1 live)",
+      "catch_": "Signature factual error on first live extraction",
+      "outcome": "adversarial governance caught a real mistake on first run — 'PascalCase for constants' vs actual UPPER_SNAKE_CASE"
+    },
+    {
+      "agent": "Advisor (Day 1)",
+      "catch_": "Self-referential diagnosis on first smoke test",
+      "outcome": "advisor identified its own firing-trigger matched the verify-first trust mechanic in the signature it was reviewing"
+    },
+    {
+      "agent": "Brutus (Day 2 Functionality 2)",
+      "catch_": "Operational schema stress-tested pre-wire",
+      "outcome": "2 dimensions removed (cannibalization risk), 1 added (vocabulary_anchors), frequency enum replaced with instance_count+evidence_list"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "prompt": "draft me a quick reply to the team explaining why we're pivoting the build mid-sprint. 3 sentences max.",
+  "nakedResponse": [
+    "Here's a draft reply:",
+    "",
+    "Hi team,",
+    "",
+    "I wanted to update you on a change to our build direction.",
+    "After careful consideration and review of recent feedback,",
+    "we've decided to pivot our approach. The main drivers for",
+    "this decision are three key factors that have emerged from",
+    "our recent iteration cycle.",
+    "",
+    "Please let me know if you have questions.",
+    "",
+    "Best regards."
+  ],
+  "cogsigResponse": [
+    "yo team quick one:",
+    "",
+    "pivoting the build — OG code-sig assumed user authors their",
+    "own code, but for heavy Claude users that breaks. directing-",
+    "signature captures what the user actually contributes —",
+    "cleaner target. 3 deploy modes stand.",
+    "",
+    "full writeup tmr."
+  ]
+}

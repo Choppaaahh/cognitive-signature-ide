@@ -1,0 +1,49 @@
+{
+  "personas": [
+    {
+      "label": "Alice — terse engineer",
+      "vocab": ["wdyt", "lgtm", "yolo", "yagni"],
+      "opening": "lgtm, ship it",
+      "compression": "55 chars (extreme-terse)",
+      "energy": "neutral",
+      "directive_style": "command, terse",
+      "isReal": false
+    },
+    {
+      "label": "Bob — verbose PM",
+      "vocab": ["circling back", "loop in", "scope creep", "surfacing"],
+      "opening": "Thanks so much for the update, team",
+      "compression": "180 chars (moderate)",
+      "energy": "neutral (sentence-case)",
+      "directive_style": "question, moderate",
+      "isReal": false
+    },
+    {
+      "label": "Tim — casual lowercase",
+      "vocab": ["u", "ur", "rn", "lil", "kinda", "sooo"],
+      "opening": "idk tbh",
+      "compression": "95 chars (terse)",
+      "energy": "variable",
+      "directive_style": "mixed, lowercase",
+      "isReal": false
+    },
+    {
+      "label": "Sue — formal academic",
+      "vocab": ["pursuant to", "behooves", "posit", "contend"],
+      "opening": "Kindly furnish",
+      "compression": "175 chars (verbose)",
+      "energy": "low (formal)",
+      "directive_style": "verbose, formal",
+      "isReal": false
+    },
+    {
+      "label": "Flex — real (from CC history)",
+      "vocab": ["laddy", "buddy", "claudi", "hellyea", "fire"],
+      "opening": "top of the morning my claudius",
+      "compression": "420 chars (verbose)",
+      "energy": "high",
+      "directive_style": "mixed, lowercase-casual",
+      "isReal": true
+    }
+  ]
+}

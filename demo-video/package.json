@@ -1,0 +1,24 @@
+{
+  "name": "cognitive-signature-ide-demo",
+  "version": "0.1.0",
+  "description": "Remotion-based demo video for CogSig plugin. Data-bound to real signature outputs. Built with Opus 4.7 hackathon submission.",
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "build": "remotion render src/index.ts CogsigDemo out/demo.mp4 --codec=h264",
+    "still": "remotion still src/index.ts CogsigDemo out/still.png --frame=0"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.0",
+    "@remotion/cli": "^4.0.0",
+    "@remotion/renderer": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.0.0"
+  },
+  "license": "MIT"
+}
