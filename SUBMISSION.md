@@ -47,7 +47,7 @@ A Claude Code plugin with **two functionalities on one pipeline**:
 
 Adversarial review dispatched at every pattern-promotion step during the build: every extraction passed Brutus + QA before shipping. 7 pre-submission error-path fixes applied from final sweep.
 
-## Shipped subagent infra (dual-function)
+## Shipped subagent infra (dual-function, two substrates)
 
 The 3 governance agents aren't scoped to signature review — they're **dual-function**. Each one serves its signature-governance role AND is available as a general-purpose specialist the user can summon for any work:
 
@@ -55,13 +55,21 @@ The 3 governance agents aren't scoped to signature review — they're **dual-fun
 - **qa** (Haiku) — schema + compile + dead-code + silent-failure auditor. `CLEAN / FIXABLE-IN-30MIN / BLOCKER`
 - **historian** (Sonnet) — drift/change/evolution tracker. `EXPECTED / UNEXPLAINED / NOISE`
 
+The same 3 agents ship across **two substrates** with identical dual-function system prompts:
+
+### In-session (Claude Code plugin)
 Summoned at the Claude Code prompt via `@agent-` mention:
 ```
 @agent-cognitive-signature-ide:brutus review this function
 @agent-cognitive-signature-ide:qa compile-check files
 @agent-cognitive-signature-ide:historian compare this config to last 5 sessions
 ```
-Function selection is prompt-driven (signature-artifact-naming triggers Function 1; bare user work triggers Function 2). Plugin agents are lowest-priority; scoped `@agent-<plugin>:<name>` form force-invokes when local same-name agents exist. The architecture we used to build this plugin is the architecture we ship.
+Session-local state. Loaded per Claude Code session.
+
+### API-level (Managed Agents beta)
+Persistent agents registered on Anthropic's infra via `client.beta.agents.create`. State outlives individual Claude Code sessions. Automatically triggered by the CogSig pipeline on every signature extraction (`managed-agents/review.py` runs `client.beta.sessions.create` + event-stream against each Managed Agent). History compounds on Anthropic's side — the Historian's drift view across many extractions only works because the Managed Agent carries memory of prior reviews.
+
+Function selection is prompt-driven on both substrates (signature-artifact-naming triggers Function 1; bare user work triggers Function 2). Plugin agents are lowest-priority at the Claude Code layer; scoped `@agent-<plugin>:<name>` form force-invokes when local same-name agents exist. **The architecture we used to build this plugin is the architecture we ship** — across both the in-session and API-level substrates.
 
 ---
 
