@@ -134,6 +134,10 @@ def main() -> int:
                     help="Skip setup-wizard by preselecting preset (normie|power|team|enterprise).")
     args = ap.parse_args()
 
+    if args.voice_only and args.operational_only:
+        print("error: --voice-only and --operational-only are mutually exclusive (would skip both extractions)", file=sys.stderr)
+        return 2
+
     repo = args.repo.resolve()
     projects_dir = args.claude_projects
 

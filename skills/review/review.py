@@ -212,8 +212,12 @@ def cmd_pending(repo: Path, rest: list[str]) -> int:
         print("cogsig: no pending patterns. Run /cogsig refresh-queue after an extract to check.")
         return 0
     print(f"cogsig: {len(patterns)} pending patterns")
+    skipped_bad = 0
     for p in patterns:
-        item = p["item"]
+        item = p.get("item")
+        if not isinstance(item, dict) or "dim" not in p or "id" not in p:
+            skipped_bad += 1
+            continue
         label = item.get("situation") or item.get("pattern") or item.get("tool") or item.get("term") or "?"
         count = item.get("instance_count", "?")
         evidence = item.get("evidence_list", [])
@@ -223,6 +227,8 @@ def cmd_pending(repo: Path, rest: list[str]) -> int:
             print(f"        ▸ {str(ev)[:100]}")
         if len(evidence) > 3:
             print(f"        ...and {len(evidence) - 3} more")
+    if skipped_bad:
+        print(f"\n  warning: skipped {skipped_bad} malformed pending entr{'y' if skipped_bad == 1 else 'ies'} — run /cogsig refresh-queue to rebuild", file=sys.stderr)
     print("\ncommands: /cogsig approve <id[,id...]> | /cogsig reject <id[,id...]> | /cogsig edit <id> <text>")
     return 0
 
@@ -268,12 +274,19 @@ def cmd_approve(repo: Path, rest: list[str]) -> int:
         print(f"error: permanent signature at {permanent_sig_path.name} missing — run refresh-queue first", file=sys.stderr)
         return 1
 
+    skipped_bad = 0
     for p in approved:
-        dim = p["dim"]
-        list_key = p["list_key"]
+        dim = p.get("dim")
+        list_key = p.get("list_key")
+        item = p.get("item")
+        if not dim or not list_key or not isinstance(item, dict):
+            skipped_bad += 1
+            continue
         if dim not in permanent_sig["dimensions"]:
             permanent_sig["dimensions"][dim] = {list_key: [], "confidence": 0.8}
-        permanent_sig["dimensions"][dim][list_key].append(p["item"])
+        permanent_sig["dimensions"][dim][list_key].append(item)
+    if skipped_bad:
+        print(f"  warning: skipped {skipped_bad} malformed approved entr{'y' if skipped_bad == 1 else 'ies'} — refresh-queue first", file=sys.stderr)
 
     write_json(permanent_sig_path, permanent_sig)
     queue["patterns"] = remaining

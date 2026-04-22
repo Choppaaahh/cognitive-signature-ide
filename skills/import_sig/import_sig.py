@@ -42,7 +42,15 @@ def history_path_for_scope(repo: Path, scope_name: str) -> Path:
 
 
 def load_and_validate(path: Path, schema_path: Path) -> dict:
-    sig = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        sig = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        print(f"error: {path.name} is not valid JSON: {e}", file=sys.stderr)
+        print("       run /cogsig export to regenerate, or inspect the file", file=sys.stderr)
+        raise SystemExit(1)
+    except OSError as e:
+        print(f"error: cannot read {path}: {e}", file=sys.stderr)
+        raise SystemExit(1)
     try:
         import jsonschema
         schema = json.loads(schema_path.read_text(encoding="utf-8"))

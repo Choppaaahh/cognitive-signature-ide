@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -159,7 +158,7 @@ def ingest(
             DirectiveSample(content=content, meta=meta, ts=ts, char_count=len(content))
         )
 
-    samples.sort(key=lambda s: s.ts or "", reverse=True)
+    samples.sort(key=lambda s: str(s.ts) if s.ts is not None else "", reverse=True)
     if max_samples:
         samples = samples[:max_samples]
 

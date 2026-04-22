@@ -22,6 +22,7 @@
     "./skills/import_sig",
     "./skills/init",
     "./skills/inject",
+    "./skills/review",
     "./skills/toggle"
   ],
   "agents": [

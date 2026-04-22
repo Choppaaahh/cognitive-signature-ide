@@ -171,14 +171,25 @@ def extract(samples_path: Path, schema_path: Path, model: str, domain: str = "co
         messages=[{"role": "user", "content": prompt}],
     )
 
-    text = response.content[0].text.strip()
+    text = "".join(
+        block.text for block in response.content if getattr(block, "type", None) == "text"
+    ).strip()
+    if not text:
+        print("error: Opus returned no text content — check API key / model availability", file=sys.stderr)
+        raise SystemExit(2)
     if text.startswith("```"):
         text = text.split("```", 2)[1]
         if text.startswith("json"):
             text = text[4:]
         text = text.strip().rstrip("`").strip()
 
-    signature = json.loads(text)
+    try:
+        signature = json.loads(text)
+    except json.JSONDecodeError as e:
+        print(f"error: Opus returned non-JSON response (likely truncated at max_tokens or refused): {e}", file=sys.stderr)
+        print(f"       first 300 chars: {text[:300]}", file=sys.stderr)
+        print(f"       retry with a smaller --max-samples or re-run", file=sys.stderr)
+        raise SystemExit(2)
     signature["version"] = "0.1"
     signature["generated_ts"] = datetime.now(timezone.utc).isoformat()
     signature["origin"] = "self"

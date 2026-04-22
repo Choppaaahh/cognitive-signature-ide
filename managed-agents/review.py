@@ -80,7 +80,7 @@ def build_historian_prompt(signature: dict, history: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def run_agent_session(client, agent_id: str, environment_id: str, title: str, prompt: str) -> str:
+def run_agent_session(client, agent_id: str, environment_id: str, title: str, prompt: str) -> tuple[str, list[str], str]:
     session = client.beta.sessions.create(
         agent=agent_id,
         environment_id=environment_id,
@@ -155,19 +155,28 @@ def main() -> int:
     for agent_name, prompt in prompts.items():
         agent_id = cache[agent_name]["id"]
         print(f"  {agent_name}: running...", file=sys.stderr)
-        text, tool_uses, session_id = run_agent_session(
-            client,
-            agent_id=agent_id,
-            environment_id=env_id,
-            title=f"CogSig {agent_name} review ({scope} / {signature.get('generated_ts', '?')[:19]})",
-            prompt=prompt,
-        )
-        review["reviews"][agent_name] = {
-            "session_id": session_id,
-            "tool_uses": tool_uses,
-            "response": text,
-        }
-        print(f"  {agent_name}: done ({len(text)} chars)", file=sys.stderr)
+        try:
+            text, tool_uses, session_id = run_agent_session(
+                client,
+                agent_id=agent_id,
+                environment_id=env_id,
+                title=f"CogSig {agent_name} review ({scope} / {signature.get('generated_ts', '?')[:19]})",
+                prompt=prompt,
+            )
+            review["reviews"][agent_name] = {
+                "session_id": session_id,
+                "tool_uses": tool_uses,
+                "response": text,
+            }
+            print(f"  {agent_name}: done ({len(text)} chars)", file=sys.stderr)
+        except Exception as e:
+            review["reviews"][agent_name] = {
+                "session_id": None,
+                "tool_uses": 0,
+                "response": f"[error] {type(e).__name__}: {e}",
+                "error": True,
+            }
+            print(f"  {agent_name}: FAILED ({type(e).__name__}) — continuing with remaining agents", file=sys.stderr)
 
     out_dir = reviews_dir(repo)
     stamp = review["run_ts"].replace(":", "").replace("-", "")[:15]

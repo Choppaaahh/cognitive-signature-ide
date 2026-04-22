@@ -48,7 +48,11 @@ def render_dimensions(dimensions: dict) -> str:
 def render_signature_prefix(signature_path: Path) -> str | None:
     if not signature_path.exists():
         return None
-    sig = json.loads(signature_path.read_text(encoding="utf-8"))
+    try:
+        sig = json.loads(signature_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"cogsig inject: skipping malformed signature at {signature_path.name}: {e}", file=sys.stderr)
+        return None
     dims = sig.get("dimensions", {})
     if not dims:
         return None
