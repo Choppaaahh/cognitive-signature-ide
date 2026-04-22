@@ -9,17 +9,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #FAF3E4;
-    --paper-deep: #F3E9D0;
-    --ink: #141413;
-    --ink-soft: #3A342C;
-    --muted: #7C6E57;
-    --rule: #D9CDB3;
-    --panel: #EFE3C6;
-    --amber: #C15F3C;
-    --amber-bright: #D97706;
-    --sage: #5E7A52;
-    --warn: #B8860B;
+    /* DARKMODE palette — warm cocoa base, cream-tan text, amber+sage accents.
+       Designed so terminal panels sit as DARKER rectangles against the page
+       (classic terminal feel) while text reads as warm-cream/tan throughout. */
+    --paper: #0F0C08;         /* page bg — deep warm cocoa */
+    --paper-deep: #16120C;    /* slightly lifted cocoa for secondary regions */
+    --ink: #F0E4C9;           /* main text — warm cream */
+    --ink-soft: #D4C7AE;      /* body text on dark panels */
+    --muted: #8A7D65;          /* muted metadata — warm tan */
+    --rule: #2A241B;           /* borders / dividers — just above bg */
+    --panel: #1B1712;          /* panel card bg — 1 shade lifted */
+    --amber: #E8845A;          /* accent — punchy amber, bright on dark */
+    --amber-bright: #FFB37A;   /* highlight amber */
+    --sage: #8CAA78;           /* sage-green confirmations */
+    --warn: #E6B84C;           /* amber warn — readable on cocoa */
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
@@ -36,8 +39,8 @@
     position: fixed; inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(ellipse at top left, rgba(193,95,60,0.04), transparent 50%),
-      radial-gradient(ellipse at bottom right, rgba(94,122,82,0.04), transparent 50%);
+      radial-gradient(ellipse at top left, rgba(232,132,90,0.09), transparent 55%),
+      radial-gradient(ellipse at bottom right, rgba(140,170,120,0.07), transparent 55%);
     z-index: 1;
   }
   .stage {
@@ -122,7 +125,7 @@
 
   .term {
     margin-top: 56px;
-    background: #1B1815;
+    background: #080604;
     border: 1px solid #2A251F;
     border-radius: 10px;
     width: 820px;
@@ -133,7 +136,7 @@
   }
   .term-bar {
     padding: 10px 14px;
-    background: #23201B;
+    background: #14110C;
     border-bottom: 1px solid #2E2923;
     display: flex;
     align-items: center;
@@ -200,7 +203,7 @@
     max-width: 1600px;
   }
   .sxs-term {
-    background: #1B1815;
+    background: #080604;
     border-radius: 10px;
     border: 1px solid #2A251F;
     overflow: hidden;
@@ -215,7 +218,7 @@
     letter-spacing: 0.2em;
     font-weight: 600;
     font-family: 'JetBrains Mono', monospace;
-    background: #23201B;
+    background: #14110C;
     border-bottom: 1px solid #2E2923;
     display: flex;
     justify-content: space-between;
@@ -291,7 +294,7 @@
     opacity: 0;
   }
   .op-panel {
-    background: #1B1815;
+    background: #080604;
     border: 1px solid #2A251F;
     border-radius: 10px;
     width: 1200px; max-width: 92vw;
@@ -636,9 +639,9 @@
     transition: opacity 0.7s ease, transform 0.7s ease;
   }
   .card.real {
-    background: #FFF8E8;
+    background: #2B1F14;
     border: 1.5px solid var(--amber);
-    box-shadow: 0 6px 30px rgba(193,95,60,0.12);
+    box-shadow: 0 6px 30px rgba(232,132,90,0.18);
   }
   .card.real .card-label::after {
     content: 'REAL';
@@ -1314,89 +1317,89 @@ const TIMELINE = [
   { t: 38.0, fn: () => streamLines('b2-naked-body', DATA.sideBySide2.nakedLines, 0.0, 'n', 400) },
   { t: 38.0, fn: () => streamLines('b2-cogsig-body', DATA.sideBySide2.cogsigLines, 0.0, 'c', 400) },
   // Caption + modes after example 2
-  { t: 52.0, fn: () => rise('b2-caption') },
-  { t: 54.5, fn: () => fade('b2-modes') },
+  { t: 50.0, fn: () => rise('b2-caption') },
+  { t: 52.5, fn: () => fade('b2-modes') },
 
-  // --- BEAT 2.5: OPERATIONAL PATTERN (60 - 100s) ---
-  { t: 59.0, fn: () => deactivate('beat2') },
-  { t: 60.0, fn: () => activate('beat25') },
-  { t: 60.3, fn: () => fade('b25-eyebrow') },
-  { t: 61.2, fn: () => rise('b25-title') },
-  { t: 62.4, fn: () => fade('b25-sub') },
-  { t: 64.5, fn: () => rise('b25-panel') },
+  // --- BEAT 2.5: OPERATIONAL PATTERN (57 - 82s) — tightened tail ---
+  { t: 56.0, fn: () => deactivate('beat2') },
+  { t: 57.0, fn: () => activate('beat25') },
+  { t: 57.3, fn: () => fade('b25-eyebrow') },
+  { t: 58.0, fn: () => rise('b25-title') },
+  { t: 59.0, fn: () => fade('b25-sub') },
+  { t: 60.5, fn: () => rise('b25-panel') },
   // Turn 1 — bug visible
-  { t: 66.0, fn: () => fade('b25-t1-sep') },
-  { t: 66.9, fn: () => fade('b25-t1-u') },
-  { t: 67.8, fn: () => fade('b25-t1-r') },
-  { t: 68.8, fn: () => fade('b25-t1-bug') },
-  { t: 70.0, fn: () => fade('b25-t1-a') },
-  { t: 71.0, fn: () => fade('b25-t1-note') },
+  { t: 61.8, fn: () => fade('b25-t1-sep') },
+  { t: 62.5, fn: () => fade('b25-t1-u') },
+  { t: 63.3, fn: () => fade('b25-t1-r') },
+  { t: 64.1, fn: () => fade('b25-t1-bug') },
+  { t: 65.2, fn: () => fade('b25-t1-a') },
+  { t: 66.0, fn: () => fade('b25-t1-note') },
   // Turn 2 — same class bug
-  { t: 73.0, fn: () => fade('b25-t2-sep') },
-  { t: 73.9, fn: () => fade('b25-t2-u') },
-  { t: 74.8, fn: () => fade('b25-t2-r') },
-  { t: 75.8, fn: () => fade('b25-t2-bug') },
-  { t: 77.0, fn: () => fade('b25-t2-a') },
-  // Detection card + modes
-  { t: 79.0, fn: () => rise('b25-card') },
-  { t: 83.0, fn: () => fade('b25-modes') },
-  { t: 87.5, fn: () => fade('b25-switch') },
-  { t: 90.5, fn: () => fade('b25-footer') },
+  { t: 67.5, fn: () => fade('b25-t2-sep') },
+  { t: 68.2, fn: () => fade('b25-t2-u') },
+  { t: 69.0, fn: () => fade('b25-t2-r') },
+  { t: 69.8, fn: () => fade('b25-t2-bug') },
+  { t: 70.8, fn: () => fade('b25-t2-a') },
+  // Detection card + modes (tight stagger)
+  { t: 72.5, fn: () => rise('b25-card') },
+  { t: 75.5, fn: () => fade('b25-modes') },
+  { t: 77.5, fn: () => fade('b25-switch') },
+  { t: 79.0, fn: () => fade('b25-footer') },
 
-  // --- BEAT 2.75: HOW IT WORKS (99 - 118s) ---
-  { t: 97.5, fn: () => deactivate('beat25') },
-  { t: 98.5, fn: () => activate('beat275') },
-  { t: 99.0, fn: () => fade('b275-eye') },
-  { t: 100.0, fn: () => rise('b275-title') },
-  { t: 101.2, fn: () => fade('b275-sub') },
-  { t: 102.5, fn: () => rise('b275-agents-panel') },
-  { t: 103.5, fn: () => rise('b275-flow-panel') },
+  // --- BEAT 2.75: HOW IT WORKS (83 - 100s) ---
+  { t: 82.0, fn: () => deactivate('beat25') },
+  { t: 83.0, fn: () => activate('beat275') },
+  { t: 83.3, fn: () => fade('b275-eye') },
+  { t: 84.0, fn: () => rise('b275-title') },
+  { t: 85.0, fn: () => fade('b275-sub') },
+  { t: 86.2, fn: () => rise('b275-agents-panel') },
+  { t: 87.0, fn: () => rise('b275-flow-panel') },
   // Agent rows (left panel)
-  { t: 104.5, fn: () => slideIn('b275-agent-1') },
-  { t: 105.3, fn: () => slideIn('b275-agent-2') },
-  { t: 106.1, fn: () => slideIn('b275-agent-3') },
+  { t: 88.0, fn: () => slideIn('b275-agent-1') },
+  { t: 88.7, fn: () => slideIn('b275-agent-2') },
+  { t: 89.4, fn: () => slideIn('b275-agent-3') },
   // Flow steps (right panel)
-  { t: 105.0, fn: () => slideIn('b275-step-1') },
-  { t: 106.0, fn: () => fadeArrow('b275-arrow-1') },
-  { t: 106.8, fn: () => slideIn('b275-step-2') },
-  { t: 107.8, fn: () => fadeArrow('b275-arrow-2') },
-  { t: 108.6, fn: () => slideIn('b275-step-3') },
-  { t: 109.6, fn: () => fadeArrow('b275-arrow-3') },
-  { t: 110.4, fn: () => slideIn('b275-step-4') },
+  { t: 88.3, fn: () => slideIn('b275-step-1') },
+  { t: 89.2, fn: () => fadeArrow('b275-arrow-1') },
+  { t: 90.0, fn: () => slideIn('b275-step-2') },
+  { t: 90.9, fn: () => fadeArrow('b275-arrow-2') },
+  { t: 91.7, fn: () => slideIn('b275-step-3') },
+  { t: 92.6, fn: () => fadeArrow('b275-arrow-3') },
+  { t: 93.4, fn: () => slideIn('b275-step-4') },
 
-  // --- BEAT 3: GRID (119 - 140s) ---
-  { t: 117.5, fn: () => deactivate('beat275') },
-  { t: 118.5, fn: () => activate('beat3') },
-  { t: 119.0, fn: () => fade('b3-eyebrow') },
-  { t: 120.0, fn: () => rise('b3-title') },
-  { t: 121.2, fn: () => fade('b3-sub') },
-  { t: 123.0, fn: () => renderGrid() },
-  { t: 136.0, fn: () => fade('b3-footer') },
+  // --- BEAT 3: GRID (101 - 119s) ---
+  { t: 100.0, fn: () => deactivate('beat275') },
+  { t: 101.0, fn: () => activate('beat3') },
+  { t: 101.5, fn: () => fade('b3-eyebrow') },
+  { t: 102.3, fn: () => rise('b3-title') },
+  { t: 103.3, fn: () => fade('b3-sub') },
+  { t: 105.0, fn: () => renderGrid() },
+  { t: 116.5, fn: () => fade('b3-footer') },
 
-  // --- BEAT 4: MAIN CLOSE (139 - 162s) ---
-  { t: 138.5, fn: () => deactivate('beat3') },
-  { t: 139.5, fn: () => activate('beat4') },
-  { t: 140.0, fn: () => fade('b4-eyebrow') },
-  { t: 141.0, fn: () => rise('b4-measure') },
-  { t: 144.5, fn: () => fade('b4-catches-title') },
-  { t: 145.0, fn: () => renderCatches() },
-  { t: 153.5, fn: () => rise('b4-tag') },
-  { t: 156.0, fn: () => fade('b4-url') },
-  { t: 157.5, fn: () => fade('b4-badge') },
+  // --- BEAT 4: MAIN CLOSE (120 - 141s) ---
+  { t: 119.0, fn: () => deactivate('beat3') },
+  { t: 120.0, fn: () => activate('beat4') },
+  { t: 120.4, fn: () => fade('b4-eyebrow') },
+  { t: 121.3, fn: () => rise('b4-measure') },
+  { t: 124.5, fn: () => fade('b4-catches-title') },
+  { t: 125.0, fn: () => renderCatches() },
+  { t: 132.5, fn: () => rise('b4-tag') },
+  { t: 134.8, fn: () => fade('b4-url') },
+  { t: 136.3, fn: () => fade('b4-badge') },
 
-  // --- BEAT 5: ENDER (samples + builder) (162 - 187s) ---
-  { t: 161.5, fn: () => deactivate('beat4') },
-  { t: 162.5, fn: () => activate('beat5') },
-  { t: 163.0, fn: () => fade('b5-s-eye') },
-  { t: 164.0, fn: () => fade('b5-s-title') },
-  { t: 165.0, fn: () => rise('b5-sample-1') },
-  { t: 165.7, fn: () => rise('b5-sample-2') },
-  { t: 166.4, fn: () => rise('b5-sample-3') },
-  { t: 167.1, fn: () => rise('b5-sample-4') },
-  { t: 170.5, fn: () => rise('b5-builder') },
-  { t: 184.0, fn: () => document.getElementById('replay').classList.add('shown') }
+  // --- BEAT 5: ENDER (samples + builder) (142 - 170s) ---
+  { t: 140.0, fn: () => deactivate('beat4') },
+  { t: 141.0, fn: () => activate('beat5') },
+  { t: 141.5, fn: () => fade('b5-s-eye') },
+  { t: 142.3, fn: () => fade('b5-s-title') },
+  { t: 143.2, fn: () => rise('b5-sample-1') },
+  { t: 143.9, fn: () => rise('b5-sample-2') },
+  { t: 144.6, fn: () => rise('b5-sample-3') },
+  { t: 145.3, fn: () => rise('b5-sample-4') },
+  { t: 148.5, fn: () => rise('b5-builder') },
+  { t: 164.0, fn: () => document.getElementById('replay').classList.add('shown') }
 ];
-const TOTAL = 187;
+const TOTAL = 167;
 
 /* ------------------------------------------------------------------
    Helpers
