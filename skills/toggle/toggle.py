@@ -199,7 +199,25 @@ def cmd_route(repo: Path, skill: str, rest: list[str]) -> int:
         "extract": repo / "skills" / "extract" / "extract.py",
         "export": repo / "skills" / "export" / "export.py",
         "import": repo / "skills" / "import_sig" / "import_sig.py",
+        "pending": repo / "skills" / "review" / "review.py",
+        "approve": repo / "skills" / "review" / "review.py",
+        "reject": repo / "skills" / "review" / "review.py",
+        "edit-pattern": repo / "skills" / "review" / "review.py",
+        "refresh-queue": repo / "skills" / "review" / "review.py",
     }
+    # Review skill takes a positional command; map toggle-side name to review-side command.
+    review_cmd_map = {
+        "pending": "pending",
+        "approve": "approve",
+        "reject": "reject",
+        "edit-pattern": "edit",
+        "refresh-queue": "refresh-queue",
+    }
+    if skill in review_cmd_map:
+        script = script_map[skill]
+        cmd = [sys.executable, str(script), review_cmd_map[skill], *rest, "--repo", str(repo)]
+        result = subprocess.run(cmd, check=False)
+        return result.returncode
     script = script_map.get(skill)
     if not script or not script.exists():
         print(f"cogsig: skill '{skill}' not found at {script}", file=sys.stderr)
@@ -242,7 +260,8 @@ def main() -> int:
 
     if command in HANDLERS:
         return HANDLERS[command](repo, rest)
-    if command in ("init", "capture", "extract", "export", "import"):
+    if command in ("init", "capture", "extract", "export", "import",
+                   "pending", "approve", "reject", "edit-pattern", "refresh-queue"):
         return cmd_route(repo, command, rest)
 
     print(f"cogsig: unknown command '{command}'", file=sys.stderr)

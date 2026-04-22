@@ -18,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -129,10 +130,47 @@ def main() -> int:
                     help="Extract only the voice (directing) signature. Skip operational-signature pass.")
     ap.add_argument("--operational-only", action="store_true",
                     help="Extract only the operational-patterns signature. Skip voice-signature pass.")
+    ap.add_argument("--preset", choices=["normie", "power", "team", "enterprise"], default=None,
+                    help="Skip setup-wizard by preselecting preset (normie|power|team|enterprise).")
     args = ap.parse_args()
 
     repo = args.repo.resolve()
     projects_dir = args.claude_projects
+
+    # Setup wizard — ask user to pick preset unless --preset flag or --yes
+    preset = args.preset
+    if not preset and not args.yes:
+        print("\ncogsig init: how do you want CogSig to work?\n")
+        print("  [1] normie — hands-off, auto-promote patterns silently at n=2")
+        print("  [2] power  — review-before-promote, you approve/reject new patterns (default)")
+        print("  [3] team   — option 2 + team-lead audit trail + Signature-Brutus/QA/Historian governance")
+        print("  [4] enterprise — option 3 + Claude Managed Agents (cloud-governed, audit log)")
+        print()
+        try:
+            choice = input("pick [1/2/3/4] (default 2): ").strip() or "2"
+        except (EOFError, KeyboardInterrupt):
+            choice = "2"
+        preset_map = {"1": "normie", "2": "power", "3": "team", "4": "enterprise"}
+        preset = preset_map.get(choice, "power")
+        print(f"  → preset set to: {preset}\n")
+    elif not preset:
+        preset = "power"
+
+    # Persist preset to state.json for review + inject to read
+    state_file = repo / ".signature-cache" / "state.json"
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state = {}
+    if state_file.exists():
+        try:
+            state = json.loads(state_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            state = {}
+    state["preset"] = preset
+    state["preset_set_ts"] = datetime.now(timezone.utc).isoformat()
+    state.setdefault("enabled", True)
+    state.setdefault("active_scope", "default")
+    state.setdefault("active_mode", "standalone" if preset == "normie" else ("cloud" if preset == "enterprise" else "standalone"))
+    state_file.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
     if args.no_seed:
         print("cogsig init: --no-seed mode. No signature will be extracted.")

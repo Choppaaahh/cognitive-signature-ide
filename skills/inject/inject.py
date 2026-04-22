@@ -61,6 +61,65 @@ def render_signature_prefix(signature_path: Path) -> str | None:
     )
 
 
+def render_pending_surface(pending_path: Path, preset: str) -> str | None:
+    """Render pending-pattern review section for injection into Claude's context prefix.
+
+    In `normie` preset, returns None (silent auto-promotion — not yet wired; user still runs
+    `/cogsig approve` manually for now). In `power/team/enterprise` preset, returns a section
+    instructing Claude to surface the pending patterns naturally in its next response.
+    """
+    if preset == "normie":
+        return None
+    if not pending_path.exists():
+        return None
+    try:
+        queue = json.loads(pending_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    patterns = queue.get("patterns", [])
+    if not patterns:
+        return None
+
+    lines = [
+        "",
+        "---",
+        f"[PENDING PATTERN REVIEWS — {len(patterns)} pattern(s) hit n=2 threshold since last approved snapshot]",
+        "",
+    ]
+    for p in patterns:
+        item = p.get("item", {})
+        dim = p.get("dim", "?")
+        pid = p.get("id", "?")
+        count = item.get("instance_count", "?")
+        label = (
+            item.get("situation")
+            or item.get("pattern")
+            or item.get("tool")
+            or item.get("term")
+            or "?"
+        )
+        evidence = item.get("evidence_list", [])
+        lines.append(f"[{pid}] {dim} — \"{str(label)[:120]}\" ({count}x instances)")
+        for ev in evidence[:2]:
+            lines.append(f"    ▸ {str(ev)[:120]}")
+        if len(evidence) > 2:
+            lines.append(f"    ▸ (+{len(evidence) - 2} more)")
+        lines.append("")
+
+    lines.append(
+        "Instructions: when your response naturally completes, surface these pending patterns to the "
+        "user in YOUR VOICE (match their compression ratio + idiom tells from signature above). "
+        "Short natural ask: 'btw I noticed [pattern] [N]x this session — promote? (id [N])'. "
+        "The user will reply with /cogsig approve <id[,id...]> or /cogsig reject <id> or /cogsig edit <id> <text>. "
+        "Don't repeat items from previous turns — check if you've already mentioned them."
+    )
+    return "\n".join(lines)
+
+
+def load_preset(state: dict) -> str:
+    return state.get("preset", "power")
+
+
 def load_state(state_path: Path) -> dict:
     if not state_path.exists():
         return {"enabled": True, "active_scope": "default"}
@@ -97,10 +156,22 @@ def main() -> int:
         print("# signature injection is OFF — run /cogsig on to enable", file=sys.stderr)
         return 0
 
+    pending_filename = "pending_patterns.json" if scope == "default" else f"pending_patterns.{scope}.json"
+    pending_file = repo / ".signature-cache" / pending_filename
+    preset = load_preset(state)
+
     prefix = render_signature_prefix(signature_path)
     if prefix is None:
-        print(f"# no signature found at {signature_path} — run capture + extract first", file=sys.stderr)
+        if pending_file.exists():
+            print(f"# no signature found at {signature_path}, but pending_patterns.json has entries — "
+                  f"signature extraction must run before pending patterns can surface", file=sys.stderr)
+        else:
+            print(f"# no signature found at {signature_path} — run capture + extract first", file=sys.stderr)
         return 0
+
+    pending_section = render_pending_surface(pending_file, preset)
+    if pending_section:
+        prefix = prefix + "\n" + pending_section
 
     print(prefix)
     return 0
