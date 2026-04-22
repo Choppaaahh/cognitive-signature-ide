@@ -93,10 +93,22 @@ def summarize_context(context: dict, max_chars: int = 4000) -> str:
     if "validation_errors" in context:
         lines.append(f"VALIDATION ERRORS: {context['validation_errors']}")
         lines.append("")
-    if "governance_reviews" in context:
+    reviews = context.get("governance_reviews")
+    if reviews:
         lines.append("GOVERNANCE REVIEW SUMMARIES:")
-        for agent, text in context["governance_reviews"].items():
-            lines.append(f"  {agent}: {str(text)[:500]}")
+        if isinstance(reviews, dict):
+            for agent, text in reviews.items():
+                lines.append(f"  {agent}: {str(text)[:500]}")
+        elif isinstance(reviews, list):
+            for entry in reviews:
+                if isinstance(entry, dict):
+                    agent = entry.get("agent", "?")
+                    text = entry.get("response", entry.get("text", str(entry)))
+                    lines.append(f"  {agent}: {str(text)[:500]}")
+                else:
+                    lines.append(f"  {str(entry)[:500]}")
+        else:
+            lines.append(f"  {str(reviews)[:500]}")
         lines.append("")
     if "historian_drift" in context:
         lines.append(f"HISTORIAN DRIFT REPORT: {context['historian_drift']}")
