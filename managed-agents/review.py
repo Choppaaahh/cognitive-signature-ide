@@ -150,7 +150,19 @@ def main() -> int:
 
     # Memory is attached by default in cloud mode. CLI flags override:
     # --with-memory forces on; --no-memory forces off. --no-memory wins ties.
+    # QA caught: enforce cloud-mode contract in code, not just docs. If a user
+    # runs --with-memory in team/standalone mode, warn + downgrade rather than
+    # silently provision memory stores that violate the README cloud-only promise.
     use_memory = (args.with_memory or mode == "cloud") and not args.no_memory
+    if use_memory and mode != "cloud":
+        print(
+            f"warning: --with-memory requested but active_mode={mode!r} "
+            f"(not 'cloud'); memory is cloud-only per README contract. "
+            f"Downgrading to --no-memory. Switch via '/cogsig mode cloud' "
+            f"to enable.",
+            file=sys.stderr,
+        )
+        use_memory = False
 
     try:
         signature = load_signature(repo, scope)
@@ -211,7 +223,7 @@ def main() -> int:
         except Exception as e:
             review["reviews"][agent_name] = {
                 "session_id": None,
-                "tool_uses": 0,
+                "tool_uses": [],  # QA caught: must match success-path list type for downstream iteration safety
                 "response": f"[error] {type(e).__name__}: {e}",
                 "error": True,
             }
