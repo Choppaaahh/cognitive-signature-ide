@@ -19,12 +19,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from client import (  # type: ignore
+    active_mode,
     active_scope,
     ensure_agents_and_env,
     get_client,
     load_history,
     load_samples,
     load_signature,
+    memory_resources_for,
     reviews_dir,
 )
 
@@ -80,12 +82,22 @@ def build_historian_prompt(signature: dict, history: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def run_agent_session(client, agent_id: str, environment_id: str, title: str, prompt: str) -> tuple[str, list[str], str]:
-    session = client.beta.sessions.create(
-        agent=agent_id,
-        environment_id=environment_id,
-        title=title,
-    )
+def run_agent_session(
+    client,
+    agent_id: str,
+    environment_id: str,
+    title: str,
+    prompt: str,
+    resources: list[dict] | None = None,
+) -> tuple[str, list[str], str]:
+    create_kwargs: dict = {
+        "agent": agent_id,
+        "environment_id": environment_id,
+        "title": title,
+    }
+    if resources:
+        create_kwargs["resources"] = resources
+    session = client.beta.sessions.create(**create_kwargs)
     collected: list[str] = []
     tool_uses: list[str] = []
 
@@ -118,10 +130,27 @@ def main() -> int:
     ap.add_argument("--repo", type=Path, default=Path.cwd())
     ap.add_argument("--scope-name", default=None)
     ap.add_argument("--force-recreate", action="store_true", help="Recreate Managed Agents + environment")
+    ap.add_argument(
+        "--with-memory",
+        action="store_true",
+        help="Attach per-agent memory stores (Managed Agents memory beta). "
+             "Auto-enabled when active_mode == 'cloud'. Stores persist across "
+             "sessions so Brutus/QA/Historian compound prior findings.",
+    )
+    ap.add_argument(
+        "--no-memory",
+        action="store_true",
+        help="Skip memory-store attachment even if active_mode == 'cloud'. Useful for diagnostic runs.",
+    )
     args = ap.parse_args()
 
     repo = args.repo.resolve()
     scope = args.scope_name or active_scope(repo)
+    mode = active_mode(repo)
+
+    # Memory is attached by default in cloud mode. CLI flags override:
+    # --with-memory forces on; --no-memory forces off. --no-memory wins ties.
+    use_memory = (args.with_memory or mode == "cloud") and not args.no_memory
 
     try:
         signature = load_signature(repo, scope)
@@ -131,9 +160,13 @@ def main() -> int:
     samples = load_samples(repo, scope)
     history = load_history(repo, scope, n=5)
 
-    print(f"reviewing signature for scope '{scope}' (origin: {signature.get('origin', '?')})", file=sys.stderr)
+    print(
+        f"reviewing signature for scope '{scope}' "
+        f"(origin: {signature.get('origin', '?')}, mode: {mode}, memory: {'on' if use_memory else 'off'})",
+        file=sys.stderr,
+    )
 
-    cache = ensure_agents_and_env(repo, force_recreate=args.force_recreate)
+    cache = ensure_agents_and_env(repo, force_recreate=args.force_recreate, with_memory=use_memory)
     env_id = cache["environment_id"]
     client = get_client()
 
@@ -146,6 +179,8 @@ def main() -> int:
     review = {
         "run_ts": datetime.now(timezone.utc).isoformat(),
         "scope": scope,
+        "active_mode": mode,
+        "memory_enabled": use_memory,
         "signature_version": signature.get("version"),
         "signature_generated_ts": signature.get("generated_ts"),
         "origin": signature.get("origin"),
@@ -154,7 +189,9 @@ def main() -> int:
 
     for agent_name, prompt in prompts.items():
         agent_id = cache[agent_name]["id"]
-        print(f"  {agent_name}: running...", file=sys.stderr)
+        resources = memory_resources_for(cache, agent_name) if use_memory else []
+        memtag = f" [memory:{resources[0]['memory_store_id']}]" if resources else ""
+        print(f"  {agent_name}: running...{memtag}", file=sys.stderr)
         try:
             text, tool_uses, session_id = run_agent_session(
                 client,
@@ -162,11 +199,13 @@ def main() -> int:
                 environment_id=env_id,
                 title=f"CogSig {agent_name} review ({scope} / {signature.get('generated_ts', '?')[:19]})",
                 prompt=prompt,
+                resources=resources or None,
             )
             review["reviews"][agent_name] = {
                 "session_id": session_id,
                 "tool_uses": tool_uses,
                 "response": text,
+                "memory_store_id": (resources[0]["memory_store_id"] if resources else None),
             }
             print(f"  {agent_name}: done ({len(text)} chars)", file=sys.stderr)
         except Exception as e:

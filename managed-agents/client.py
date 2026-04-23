@@ -172,16 +172,99 @@ GOVERNANCE_AGENTS = {
 TOOLS_CONFIG = [{"type": "agent_toolset_20260401"}]
 
 
-def ensure_agents_and_env(repo: Path, force_recreate: bool = False) -> dict:
+# ---- Memory stores (Managed Agents memory, public beta) ----
+#
+# One memory store per governance agent, gated on `active_mode == "cloud"`.
+# Stores are attached at session creation time (see review.py). They persist
+# across sessions — Brutus accumulates prior critical findings, Historian
+# accumulates prior drift verdicts, QA accumulates recurring schema violations.
+# Cache under `memory_stores:` in managed-agents.json; same recreate semantics
+# as agents.
+#
+# Each store is scoped to a single governance agent so that writes from one
+# don't contaminate another's memory. All three are mounted `read_write` at
+# `/mnt/memory/<name>` in the container.
+MEMORY_STORES = {
+    "signature-brutus": {
+        "name": "CogSig Brutus Findings",
+        "description": (
+            "Adversarial review findings across signature reviews. Prior "
+            "KILL/REWORK/PASS-WITH-CAVEATS verdicts, recurring weak claims, "
+            "samples that contradicted signature dimensions, calibration "
+            "data (how often PASS was returned). Check before starting any "
+            "new review so you don't repeat a conclusion that was already "
+            "reversed."
+        ),
+        "instructions": (
+            "Brutus-governance memory — prior findings across signature "
+            "reviews. BEFORE reviewing, check /mnt/memory/brutus-findings for "
+            "prior KILL/REWORK/CONTRADICTED verdicts on the current scope. "
+            "AFTER reviewing, append a short note (scope, version, top "
+            "critical finding, verdict) so future reviews see the history. "
+            "Keep the store organized: one file per scope, append to it "
+            "rather than creating new files."
+        ),
+    },
+    "signature-qa": {
+        "name": "CogSig QA Schema Violations",
+        "description": (
+            "Recurring schema violations per scope. Repeated failures on the "
+            "same dimension, repeated missing sub-fields, patterns of origin "
+            "enum drift. Use it to flag deja-vu violations vs genuinely new "
+            "schema issues."
+        ),
+        "instructions": (
+            "QA memory — recurring schema violations across signatures. "
+            "BEFORE validating, check /mnt/memory/qa-recurring for prior "
+            "FAIL reports on the current scope. Note if the same violation "
+            "recurs (signal the extractor has a persistent bug). AFTER "
+            "validating, append any new FAIL entries. Do not write a memory "
+            "if the signature PASSES — no-signal writes waste the store."
+        ),
+    },
+    "signature-historian": {
+        "name": "CogSig Drift History",
+        "description": (
+            "Drift classifications across signature versions. Prior EXPECTED "
+            "/ UNEXPLAINED / NOISE verdicts per dimension, through-line "
+            "summaries, known evolution trajectories. The scope's history — "
+            "not the signature itself — is the product."
+        ),
+        "instructions": (
+            "Historian memory — drift trajectories across signature "
+            "versions. BEFORE classifying, check /mnt/memory/drift-history "
+            "for the scope's prior through-line. If the new classification "
+            "continues the established trajectory, say so. If it breaks the "
+            "trajectory, that IS the signal. AFTER classifying, append the "
+            "new entry (version, date, classification summary, through-line "
+            "delta) so the trajectory compounds."
+        ),
+    },
+}
+
+
+def ensure_agents_and_env(repo: Path, force_recreate: bool = False, with_memory: bool = False) -> dict:
     """Create (or reuse) the 3 governance agents + shared environment.
 
     Returns a dict with agent IDs keyed by agent name + environment_id.
     Cached in .signature-cache/managed-agents.json.
+
+    When `with_memory=True`, ALSO ensures a memory store per agent exists and
+    caches the store IDs under `memory_stores`. Safe to call with memory=True
+    even if memory stores were created in a prior call — idempotent.
     """
     cache = load_cache(repo)
-    if cache and not force_recreate and all(
-        k in cache for k in ("environment_id", "signature-brutus", "signature-qa", "signature-historian")
-    ):
+    required_agent_keys = ("environment_id", "signature-brutus", "signature-qa", "signature-historian")
+    agents_ready = bool(cache) and all(k in cache for k in required_agent_keys)
+    memory_ready = (
+        not with_memory
+        or (
+            "memory_stores" in cache
+            and all(name in cache.get("memory_stores", {}) for name in MEMORY_STORES)
+        )
+    )
+
+    if agents_ready and memory_ready and not force_recreate:
         return cache
 
     client = get_client()
@@ -213,8 +296,59 @@ def ensure_agents_and_env(repo: Path, force_recreate: bool = False) -> dict:
         }
         print(f"created agent {name}: {agent.id}", file=sys.stderr)
 
+    if with_memory:
+        cache.setdefault("memory_stores", {})
+        for agent_name, store_spec in MEMORY_STORES.items():
+            existing = cache["memory_stores"].get(agent_name)
+            if existing and not force_recreate:
+                continue
+            store = client.beta.memory_stores.create(
+                name=store_spec["name"],
+                description=store_spec["description"],
+            )
+            cache["memory_stores"][agent_name] = {
+                "id": store.id,
+                "name": store_spec["name"],
+                "instructions": store_spec["instructions"],
+                "created_ts": datetime.now(timezone.utc).isoformat(),
+            }
+            print(f"created memory store for {agent_name}: {store.id}", file=sys.stderr)
+
     save_cache(repo, cache)
     return cache
+
+
+def memory_resources_for(cache: dict, agent_name: str) -> list[dict]:
+    """Build the `resources[]` list for a session to attach the agent's
+    memory store. Returns [] if memory stores haven't been provisioned — the
+    session will still run, just without cross-session memory.
+
+    Gated by the caller based on `active_mode`; this helper is pure.
+    """
+    stores = cache.get("memory_stores") or {}
+    entry = stores.get(agent_name)
+    if not entry:
+        return []
+    spec = MEMORY_STORES.get(agent_name, {})
+    return [
+        {
+            "type": "memory_store",
+            "memory_store_id": entry["id"],
+            "access": "read_write",
+            "instructions": entry.get("instructions") or spec.get("instructions", ""),
+        }
+    ]
+
+
+def active_mode(repo: Path) -> str:
+    """Read active_mode from state.json. Default: standalone."""
+    state = repo / ".signature-cache" / "state.json"
+    if not state.exists():
+        return "standalone"
+    try:
+        return json.loads(state.read_text(encoding="utf-8")).get("active_mode", "standalone")
+    except json.JSONDecodeError:
+        return "standalone"
 
 
 def load_signature(repo: Path, scope: str) -> dict:

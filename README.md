@@ -211,6 +211,18 @@ If no other agents share the short names, `@agent-brutus` / `@agent-qa` / `@agen
 
 **The architecture we used to build this plugin is the architecture we ship.** Every fix we applied pre-submission went through the same brutus+qa loop that's now installed on your machine.
 
+### Cloud mode — cross-session agent memory (Managed Agents memory beta)
+
+When `active_mode == cloud`, each governance agent gets its own persistent memory store via the Claude Managed Agents memory beta (`managed-agents-2026-04-01`). Stores mount into the session container under `/mnt/memory/` and survive across sessions:
+
+- **Brutus** accumulates prior KILL / REWORK / CONTRADICTED verdicts per scope. Before reviewing a new extraction, it checks whether the same claim was already killed on an earlier version.
+- **Historian** accumulates the through-line for each scope. Drift classifications compound — `UNEXPLAINED` becomes `EXPECTED` once the explanation is written, and the trajectory's shape becomes the product (not any one snapshot).
+- **QA** accumulates recurring schema violations so repeat-offender dimensions get flagged separately from one-off noise.
+
+Memory is gated on `active_mode == cloud` and auto-provisioned at first use (`ensure_agents_and_env(repo, with_memory=True)`). In `standalone` / `team` / default `normie` modes, memory stores are not created — no cost, no API calls, no Managed Agents dependency. Memory is an opt-in governance layer for users who chose the `cloud` tier, not a default.
+
+Memory store IDs are cached alongside the agent IDs in `.signature-cache/managed-agents.json`. Audit trail is built into the beta: every mutation creates an immutable `memory_version` (retained 30d, longer for infrequently-changed memories). Stores can be seeded, read, edited, and redacted via the API — CogSig does not wrap those directly; users with compliance needs can use the SDK (`client.beta.memory_stores.*`) against the cached store IDs.
+
 ### Where the architecture came from
 
 The architecture was derived from problems encountered during extensive Claude Code usage. Every primitive (breadcrumbs / patterns / governance agents / advisor-at-inflection / pattern-promotion thresholds / drift detection / scope-switching / signature export-import) was built in response to a specific failure mode the author hit using Claude. The plugin packages that operational-discipline substrate into a shape any Claude Code user can install.
