@@ -1,2 +1,2 @@
-anthropic>=0.40.0
+anthropic>=0.97.0  # memory_stores beta requires 0.97+; <0.97 lacks client.beta.memory_stores entirely
 jsonschema>=4.0.0
