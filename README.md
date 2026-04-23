@@ -89,21 +89,24 @@ The governance layer is the product. Most of the time you don't see it working. 
 
 ## 3 governance tiers × 4 onboarding presets
 
-| User type | Governance infrastructure | Interaction posture |
-|-----------|---------------------------|---------------------|
-| **Solo / normie** | Standalone — direct API call, inline | Turn on, forget. Advisor fires invisibly. |
-| **Power user / team (3-10)** | In-session agents — `brutus` / `qa` / `historian` available at the prompt via `@agent-` mention | Interactive governance available; team signatures exportable |
-| **Enterprise** | Cloud-governed — Claude Managed Agents (beta `managed-agents-2026-04-01`) | Compliance + audit + cross-device sync |
+Four presets map to three governance modes. Each preset picks the mode that matches the user type — users can always override with `/cogsig mode <name>` afterwards.
 
-Same pipeline. Same tagline. Three governance infrastructures, one choice:
+| Preset | Maps to mode | Promotion posture | Governance infrastructure |
+|--------|--------------|-------------------|---------------------------|
+| **normie** | `standalone` | Auto-promote silently at n=2 | Direct API call, inline — turn on, forget |
+| **power** | `standalone` | Review-before-promote (approve/reject pending) | Direct API call, inline — interactive governance on your machine |
+| **team** | `team` | Review-before-promote | In-session subagents — `brutus` / `qa` / `historian` available at the prompt via `@agent-` mention |
+| **enterprise** | `cloud` | Review-before-promote + Brutus/QA/Historian auto-run on every approve | Cloud-governed — Claude Managed Agents (beta `managed-agents-2026-04-01`) with cross-session memory |
+
+Same pipeline. Four onboarding choices map to three governance infrastructures:
 
 ```
-/cogsig mode standalone   # default
-/cogsig mode team
-/cogsig mode cloud
+/cogsig mode standalone   # used by: normie, power
+/cogsig mode team         # used by: team
+/cogsig mode cloud        # used by: enterprise
 ```
 
-Standalone is the default — zero agent setup, instant value. Team and cloud layer on richer governance when users need it.
+Presets are set at `/cogsig init`; governance mode can always be re-selected with `/cogsig mode <name>`. Standalone is the default if nothing is chosen — zero agent setup, instant value. Team and cloud layer on richer governance when users need it.
 
 ---
 

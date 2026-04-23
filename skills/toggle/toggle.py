@@ -93,8 +93,10 @@ def cmd_status(repo: Path, _rest: list[str]) -> int:
     enabled = "ON" if state["enabled"] else "OFF"
     scope = state["active_scope"]
     mode = state.get("active_mode", "standalone")
+    preset = state.get("preset")
     sig_path = signature_path_for_scope(repo, scope)
-    print(f"cogsig: {enabled} | scope: {scope} | governance mode: {mode}")
+    preset_tag = f" | preset: {preset}" if preset else ""
+    print(f"cogsig: {enabled} | scope: {scope}{preset_tag} | governance mode: {mode}")
 
     if not sig_path.exists():
         print(f"  no signature at {sig_path.name} — run /cogsig capture + /cogsig extract")

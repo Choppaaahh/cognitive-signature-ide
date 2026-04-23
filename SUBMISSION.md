@@ -29,7 +29,7 @@ A Claude Code plugin with **two functionalities on one pipeline**:
 
 2. **Operational signature** — extracts recurring decision templates, failure patterns, tooling invocations, and vocabulary anchors from multi-turn scaffold work. Auto-promoted to a permanent signature when n≥2 instances observed. User reviews or silent-promotes depending on mode.
 
-**Four onboarding presets** (normie / power / team / enterprise) map to **three deploy modes** (standalone / team-shared / cloud-governed). Normie = silent auto-promote. Power+ = review-first, Claude surfaces pending patterns at session start.
+**Four onboarding presets** map to **three deploy modes**: `normie`→`standalone`, `power`→`standalone`, `team`→`team`, `enterprise`→`cloud`. Normie = silent auto-promote. Power+ = review-first, Claude surfaces pending patterns at session start. Users can always override the mode after init with `/cogsig mode <name>`.
 
 ---
 

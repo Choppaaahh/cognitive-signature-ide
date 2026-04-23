@@ -30,11 +30,11 @@ The plugin's hands-off-by-default UX has a load-bearing exception: when new patt
 
 ## Preset behavior (from state.json)
 
-Setup-wizard preset determines surface behavior:
-- `preset: normie` — auto-promote at n=2 without surfacing (silent)
-- `preset: power` — surface before promotion, user approves inline (default)
-- `preset: team` — power mode + team-lead audit trail
-- `preset: enterprise` — team mode + Managed Agents reviews every promotion
+Setup-wizard preset determines surface behavior. Each preset also implies a default `active_mode` (set at init, overridable with `/cogsig mode <name>`):
+- `preset: normie` (→ mode `standalone`) — auto-promote at n=2 without surfacing (silent)
+- `preset: power` (→ mode `standalone`) — surface before promotion, user approves inline (default)
+- `preset: team` (→ mode `team`) — power mode + in-session `@agent-*` brutus/qa/historian available
+- `preset: enterprise` (→ mode `cloud`) — power mode + Managed Agents (brutus/qa/historian) auto-reviews every approve, with cross-session memory beta
 
 ## Data files
 

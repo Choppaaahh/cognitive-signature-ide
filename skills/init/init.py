@@ -145,11 +145,12 @@ def main() -> int:
     preset = args.preset
     if not preset and not args.yes:
         print("\ncogsig init: how do you want CogSig to work?\n")
-        print("  [1] normie — hands-off, auto-promote patterns silently at n=2")
-        print("  [2] power  — review-before-promote, you approve/reject new patterns (default)")
-        print("  [3] team   — option 2 + team-lead audit trail + brutus/qa/historian governance subagents")
-        print("  [4] enterprise — option 3 + Claude Managed Agents (cloud-governed, audit log)")
+        print("  [1] normie     — solo user, hands-off, auto-promote patterns silently at n=2 (mode: standalone)")
+        print("  [2] power      — solo user, review-before-promote, approve/reject pending (default, mode: standalone)")
+        print("  [3] team       — 3-10 person team, in-session brutus/qa/historian @agent-* governance (mode: team)")
+        print("  [4] enterprise — Claude Managed Agents cloud-governed + cross-session memory beta (mode: cloud)")
         print()
+        print("  (you can change mode any time with /cogsig mode <standalone|team|cloud>)\n")
         try:
             choice = input("pick [1/2/3/4] (default 2): ").strip() or "2"
         except (EOFError, KeyboardInterrupt):
@@ -173,7 +174,22 @@ def main() -> int:
     state["preset_set_ts"] = datetime.now(timezone.utc).isoformat()
     state.setdefault("enabled", True)
     state.setdefault("active_scope", "default")
-    state.setdefault("active_mode", "standalone" if preset == "normie" else ("cloud" if preset == "enterprise" else "standalone"))
+    # Preset → active_mode mapping. Each preset implies the governance-dispatch
+    # tier appropriate for that user type. Users can always override afterwards
+    # via `/cogsig mode <name>` — the mapping is a sensible default, not a lock.
+    #   normie     → standalone  (solo, hands-off, auto-promote silent)
+    #   power      → standalone  (solo, manual approve/reject; no team subagents)
+    #   team       → team        (in-session @agent-* governance subagents)
+    #   enterprise → cloud       (Managed Agents API w/ cross-session memory beta)
+    # Init is authoritative: on re-run (setdefault→unset first), the mapping
+    # re-applies so the preset the user just picked is respected.
+    _PRESET_TO_MODE = {
+        "normie": "standalone",
+        "power": "standalone",
+        "team": "team",
+        "enterprise": "cloud",
+    }
+    state["active_mode"] = _PRESET_TO_MODE.get(preset, "standalone")
     state_file.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
     if args.no_seed:
