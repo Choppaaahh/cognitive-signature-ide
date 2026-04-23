@@ -49,7 +49,7 @@ Four dimensions in the shipped schema (v0.2 after adversarial review):
 
 Every item requires `instance_count` + `evidence_list` of actual direct quotes. No frequency-enum handwaving; objective defensible counting.
 
-Governance-promoted-only: every pattern passes Brutus (adversarial) + QA (schema) + Historian (drift) before entering the permanent signature. Hallucinated patterns don't stick.
+Governance-promoted-only: every pattern passes QA schema validation before entering the permanent signature (deterministic, fast, $0 — refuses malformed items). In `cloud` mode, Brutus (adversarial) and Historian (drift) also run via Managed Agents before promotion. In `team` mode, in-session Brutus/QA/Historian subagents are invokable at the prompt (`@agent-cognitive-signature-ide:<name>`). Hallucinated patterns don't stick.
 
 **Status**: **live-shipped**. `/cogsig init` extracts BOTH voice and operational signatures by default in one command. Same pipeline, different extraction lens on the same corpus. Architecture extends naturally to additional pattern classes (bug patterns as typed sub-class of failure_patterns, reasoning-chain patterns, domain-specific patterns, cross-team patterns) as usage corpus grows.
 
@@ -69,11 +69,12 @@ Same pipes, two layers of signal, **both extracted in one command** (`/cogsig in
 
 ## Hands-off by default — exception-triage governance
 
-Default posture: zero touch. The plugin runs quietly in the background. Advisor fires at inflection points automatically; governance agents run automatically; user is surfaced ONLY when something conflicts or needs review.
+Default posture: zero touch. The plugin runs quietly in the background. Advisor fires at inflection points automatically; governance agents run automatically **when `active_mode` is `cloud`** (Managed Agents beta); user is surfaced ONLY when something conflicts or needs review.
 
 **What runs silently**:
 - Signature extraction on your first `/cogsig init` and on subsequent `/cogsig refresh`
-- Governance review (Brutus / QA / Historian) after every extraction
+- QA schema validation on every approve/auto-promote (deterministic, no LLM call, $0)
+- Governance review (Brutus / QA / Historian via Managed Agents) after every extraction — `active_mode == cloud` only
 - Advisor consultation at inflection points (low-confidence extraction, conflicting governance, unexplained drift)
 - Injection on every Claude Code response
 

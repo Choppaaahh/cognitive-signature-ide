@@ -1,0 +1,145 @@
+{
+  "run_ts": "2026-04-23T20:36:57.978508+00:00",
+  "seed": 42,
+  "model": "claude-opus-4-7",
+  "scored": 10,
+  "correct": 10,
+  "accuracy": 1.0,
+  "chance": 0.3333333333333333,
+  "delta_pp": 66.66666666666667,
+  "signature_version": "0.1",
+  "signature_generated_ts": "2026-04-22T10:31:44.697410+00:00",
+  "signature_domain": "directing",
+  "picks": [
+    {
+      "prompt_id": "pivot-reply",
+      "prediction": "A",
+      "real_label": "A",
+      "correct": true,
+      "confidence": 0.6,
+      "reasoning": "Output A has the most casual, run-on texture ('eat the context switch', 'double down', 1:1) with a looser register matching the signature's hunch-first, comma-spliced style. B and C read as more formal/corporate templates, less aligned with the collaborator-voice the signature would nudge toward.",
+      "shuffled_order": {
+        "A": "real",
+        "B": "baseline",
+        "C": "placebo"
+      }
+    },
+    {
+      "prompt_id": "decide-ab",
+      "prediction": "C",
+      "real_label": "C",
+      "correct": true,
+      "confidence": 0.5,
+      "reasoning": "C has the most conversational, run-on texture ('scope creeps, an edge case bites, you burn Saturday...') and an offer to re-engage ('say so and I'll reconsider'), which better matches a collaborator responding to a hunch-first, parallel-thread director. A and B are more rigidly structured/listy, less matched to the signature's casual energy.",
+      "shuffled_order": {
+        "A": "baseline",
+        "B": "placebo",
+        "C": "real"
+      }
+    },
+    {
+      "prompt_id": "summarize-paper",
+      "prediction": "C",
+      "real_label": "C",
+      "correct": true,
+      "confidence": 0.6,
+      "reasoning": "C has the most casual, punchy voice ('ditched', 'heavy lifting', 'way better', 'basically everything') which is closer to the signature's informal, high-energy register than the clean formal summaries in A and B \u2014 though it lacks full lowercase/run-on markers since the prompt was a neutral summarization task.",
+      "shuffled_order": {
+        "A": "placebo",
+        "B": "baseline",
+        "C": "real"
+      }
+    },
+    {
+      "prompt_id": "discord-announce",
+      "prediction": "A",
+      "real_label": "A",
+      "correct": true,
+      "confidence": 0.5,
+      "reasoning": "A is the most casual/lowercase with 'hit me if anything looks cursed' matching the signature's lowercase-casual, trust-extending vibe. B feels like a placebo offering structured options, C is more emoji-heavy standard hype but retains capitalization. A best matches the terse-casual lowercase tell, though the signature is verbose so this is uncertain.",
+      "shuffled_order": {
+        "A": "real",
+        "B": "placebo",
+        "C": "baseline"
+      }
+    },
+    {
+      "prompt_id": "critique-plan",
+      "prediction": "C",
+      "real_label": "C",
+      "correct": true,
+      "confidence": 0.4,
+      "reasoning": "All three outputs are formally structured and don't match the user's lowercase run-on style at all \u2014 but the signature notes the user 'expects full analysis / matched verbosity with structured options' and often asks about plugins ('cc plugin'). C explicitly mentions 'plugin/internal tool' as a closing hedge, which feels like it's picking up on the directing/plugin context from the signature.",
+      "shuffled_order": {
+        "A": "baseline",
+        "B": "placebo",
+        "C": "real"
+      }
+    },
+    {
+      "prompt_id": "risks-3",
+      "prediction": "C",
+      "real_label": "C",
+      "correct": true,
+      "confidence": 0.9,
+      "reasoning": "Output C ends with 'plan the freeze checklist with Brutus' \u2014 a direct pickup of the signature's 'plan it up with brutus' idiom. It also has a looser, more collaborator-voiced tone ('if anything weirds out') matching the hunch-first, casual register.",
+      "shuffled_order": {
+        "A": "placebo",
+        "B": "baseline",
+        "C": "real"
+      }
+    },
+    {
+      "prompt_id": "staged-plan",
+      "prediction": "B",
+      "real_label": "B",
+      "correct": true,
+      "confidence": 0.45,
+      "reasoning": "All three outputs are formal/structured, none match the lowercase run-on hunch-stacked voice of the signature \u2014 so the signature likely shaped content/structure rather than voice. B ends with a compressed trio of concrete choices ('AST scan / runtime errors / both', 'one-shot or watch-mode') that best matches the signature's parallel-thread, stacked-directive cadence and expectation of picking up multiple threads at once.",
+      "shuffled_order": {
+        "A": "baseline",
+        "B": "real",
+        "C": "placebo"
+      }
+    },
+    {
+      "prompt_id": "walkthrough",
+      "prediction": "B",
+      "real_label": "B",
+      "correct": true,
+      "confidence": 0.85,
+      "reasoning": "B ends with 'Whatcha leaning toward?' \u2014 a direct idiomatic tell from the signature ('whatcha think'). It also has the hunch-first, parallel-thread, collaborator tone ('My honest read', 'thinking through this out loud') rather than the polished consultant framing of A and C.",
+      "shuffled_order": {
+        "A": "baseline",
+        "B": "real",
+        "C": "placebo"
+      }
+    },
+    {
+      "prompt_id": "pushback",
+      "prediction": "A",
+      "real_label": "A",
+      "correct": true,
+      "confidence": 0.6,
+      "reasoning": "Output A has the most casual register ('pushback incoming', 'nod', 'ship it', 'foot-gun', 'clocked all this') and matches the signature's collaborator tone and lowercase-ish hype better than B/C, which are more formally structured. The signature's owner writes casually and expects a matched conversational energy rather than neat numbered formality.",
+      "shuffled_order": {
+        "A": "real",
+        "B": "baseline",
+        "C": "placebo"
+      }
+    },
+    {
+      "prompt_id": "ship-tonight",
+      "prediction": "B",
+      "real_label": "B",
+      "correct": true,
+      "confidence": 0.7,
+      "reasoning": "B references 'brutus' which matches the signature's 'plan it up with brutus' evidence, and uses the QA-loop framing that fits the directive style. A and C are more generic; B has a signature-specific tell.",
+      "shuffled_order": {
+        "A": "baseline",
+        "B": "real",
+        "C": "placebo"
+      }
+    }
+  ]
+}

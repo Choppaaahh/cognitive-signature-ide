@@ -89,6 +89,88 @@ def item_key(dim: str, item: dict) -> str:
     return f"{dim}::{_normalize(json.dumps(item, sort_keys=True), 100)}"
 
 
+def _dispatch_cloud_governance(repo: Path, scope: str, items: list[dict]) -> bool:
+    """Dispatch managed-agents/review.py synchronously for cloud-mode approvals.
+
+    Best-effort: if managed-agents infra is unavailable (missing SDK, missing API key,
+    agent setup failure), prints a warning and returns False so approval is refused
+    rather than silently bypassing the governance gate. Cloud mode MUST fail closed —
+    that's the contract. Non-cloud modes never call this function.
+    """
+    import subprocess
+    import sys as _sys
+
+    plugin_root = Path(__file__).resolve().parent.parent.parent
+    managed_script = plugin_root / "managed-agents" / "review.py"
+    if not managed_script.exists():
+        print(f"cogsig: cloud mode — managed-agents script missing at {managed_script}", file=_sys.stderr)
+        return False
+    cmd = [
+        _sys.executable, str(managed_script),
+        "--repo", str(repo),
+    ]
+    if scope != "default":
+        cmd.extend(["--scope-name", scope])
+    try:
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=300)
+    except (subprocess.TimeoutExpired, OSError) as e:
+        print(f"cogsig: cloud governance dispatch failed ({type(e).__name__}): {e}", file=_sys.stderr)
+        return False
+    if result.returncode != 0:
+        print(f"cogsig: managed-agents review returned rc={result.returncode}", file=_sys.stderr)
+        if result.stderr:
+            print(f"  stderr: {result.stderr[:500]}", file=_sys.stderr)
+        return False
+    print(f"cogsig: cloud governance review completed ({len(items)} pattern(s) reviewed)", file=_sys.stderr)
+    return True
+
+
+def _qa_validate_patterns(pending: list[dict]) -> list[str]:
+    """Governance-gate: deterministic QA schema check on pending patterns before they
+    enter the permanent signature. Returns list of human-readable error messages;
+    empty list = PASS. Runs $0/fast — no LLM call. Matches the per-dim schema
+    required-fields in signature_schema_operational.json.
+
+    Fields required per dim (from schema):
+      recurring_decision_templates: situation, response, instance_count, evidence_list
+      recurring_failure_patterns:   pattern, context, instance_count, evidence_list
+      recurring_tooling_invocations:tool, context, instance_count, evidence_list
+      vocabulary_anchors:           term, domain, instance_count, evidence_list
+    """
+    required_fields = {
+        "recurring_decision_templates": ("situation", "response", "instance_count", "evidence_list"),
+        "recurring_failure_patterns": ("pattern", "context", "instance_count", "evidence_list"),
+        "recurring_tooling_invocations": ("tool", "context", "instance_count", "evidence_list"),
+        "vocabulary_anchors": ("term", "domain", "instance_count", "evidence_list"),
+    }
+    errors: list[str] = []
+    for p in pending:
+        dim = p.get("dim")
+        item = p.get("item")
+        if not isinstance(item, dict):
+            errors.append(f"item missing or not dict for pending entry: {p.get('id', '?')}")
+            continue
+        fields = required_fields.get(dim)
+        if not fields:
+            errors.append(f"unknown dim '{dim}' for item {p.get('id', '?')}")
+            continue
+        for f in fields:
+            if f not in item:
+                errors.append(f"dim={dim} id={p.get('id','?')}: missing required field '{f}'")
+                continue
+            val = item[f]
+            if f == "instance_count":
+                if not isinstance(val, (int, float)) or val < 2:
+                    errors.append(f"dim={dim} id={p.get('id','?')}: instance_count must be int>=2, got {val!r}")
+            elif f == "evidence_list":
+                if not isinstance(val, list) or len(val) == 0:
+                    errors.append(f"dim={dim} id={p.get('id','?')}: evidence_list must be non-empty list, got {type(val).__name__}")
+            else:
+                if not isinstance(val, str) or not val.strip():
+                    errors.append(f"dim={dim} id={p.get('id','?')}: field '{f}' must be non-empty string")
+    return errors
+
+
 def load_rejected(repo: Path, scope: str = "default") -> set[str]:
     path = rejected_path(repo, scope)
     if not path.exists():
@@ -184,6 +266,50 @@ def cmd_refresh_queue(repo: Path, rest: list[str]) -> int:
 
     pending = diff_signature(new_sig, permanent_sig, rejected_keys)
 
+    # STEADY-STATE normie branch: silent auto-promote. Per preset contract
+    # (README: "normie = hands-off, auto-promote patterns silently at n=2"),
+    # normie users don't review — patterns that pass the diff + n>=2 go straight
+    # to permanent. Keeps the hands-off promise intact on extract #2, #3, ...
+    # (first-run seed branch above handled #1 with no patterns to promote).
+    if preset == "normie" and pending:
+        validator_errs = _qa_validate_patterns(pending)
+        if validator_errs:
+            # Refuse silent auto-promote when any pending item is malformed.
+            # Stay conservative: write empty queue, print to stderr, return 0
+            # so the normie user isn't crashed by a bad upstream extract.
+            write_json(pending_path(repo, scope), {
+                "last_refresh_ts": datetime.now(timezone.utc).isoformat(),
+                "scope": scope,
+                "preset": preset,
+                "patterns": [],
+                "last_auto_promote_skipped": validator_errs[:5],
+            })
+            print(
+                f"review: normie steady-state — {len(validator_errs)} malformed pending item(s); "
+                f"skipping auto-promote. First errors: {validator_errs[:2]}",
+                file=sys.stderr,
+            )
+            return 0
+        # Promote every valid pending item directly into permanent.
+        for p in pending:
+            dim = p["dim"]
+            list_key = p["list_key"]
+            item = p["item"]
+            if dim not in permanent_sig.setdefault("dimensions", {}):
+                permanent_sig["dimensions"][dim] = {list_key: [], "confidence": 0.8}
+            permanent_sig["dimensions"][dim][list_key].append(item)
+        write_json(permanent_sig_path, permanent_sig)
+        write_json(pending_path(repo, scope), {
+            "last_refresh_ts": datetime.now(timezone.utc).isoformat(),
+            "scope": scope,
+            "preset": preset,
+            "patterns": [],
+            "last_auto_promote_count": len(pending),
+            "last_auto_promote_ts": datetime.now(timezone.utc).isoformat(),
+        })
+        print(f"review: normie steady-state — auto-promoted {len(pending)} pattern(s) silently", file=sys.stderr)
+        return 0
+
     # Write pending queue with auto-assigned IDs
     for i, p in enumerate(pending, 1):
         p["id"] = i
@@ -265,6 +391,27 @@ def cmd_approve(repo: Path, rest: list[str]) -> int:
     if not approved:
         print(f"no pending patterns match IDs {ids}", file=sys.stderr)
         return 1
+
+    # Governance gate: run deterministic QA schema validation before writing to permanent.
+    # In cloud mode, ALSO dispatch Brutus + Historian via managed-agents/review.py (slower,
+    # costs API). In standalone/team modes, QA-only is the gate (behavioral agent discipline
+    # still applies at the prompt layer for team mode).
+    qa_errors = _qa_validate_patterns(approved)
+    if qa_errors:
+        print("cogsig: approval refused — QA schema validation failed", file=sys.stderr)
+        for err in qa_errors[:10]:
+            print(f"  - {err}", file=sys.stderr)
+        if len(qa_errors) > 10:
+            print(f"  ... and {len(qa_errors) - 10} more", file=sys.stderr)
+        print("fix upstream extract or use /cogsig edit <id> <text> before re-approving", file=sys.stderr)
+        return 1
+
+    active_mode = state.get("active_mode", "standalone")
+    if active_mode == "cloud":
+        cloud_ok = _dispatch_cloud_governance(repo, scope, approved)
+        if not cloud_ok:
+            print("cogsig: approval refused — cloud governance check failed (see stderr above)", file=sys.stderr)
+            return 1
 
     # Apply approved to permanent signature
     op_scope = "operational" if scope == "default" else f"{scope}-operational"

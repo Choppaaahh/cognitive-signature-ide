@@ -232,6 +232,61 @@ def _load_advisor():
         return None, None
 
 
+def _load_active_mode(repo: Path) -> str:
+    """Read active_mode from state.json. Defaults to 'standalone' if missing/malformed."""
+    state_file = repo / ".signature-cache" / "state.json"
+    if not state_file.exists():
+        return "standalone"
+    try:
+        state = json.loads(state_file.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return "standalone"
+    mode = state.get("active_mode", "standalone")
+    if mode not in ("standalone", "team", "cloud"):
+        return "standalone"
+    return mode
+
+
+def _dispatch_mode_hook(mode: str, repo: Path, scope_name: str, domain: str) -> None:
+    """Post-extraction hook: branch on active_mode.
+
+    - standalone: no extra action (default). Signature lives local, governance on-demand.
+    - team:       print reminder to invoke in-session subagents (@agent-<plugin>:brutus/qa/historian).
+                  We can't auto-dispatch subagents from a python subprocess — they're Claude Code
+                  in-session constructs. Best we do is surface the reminder in the extract output.
+    - cloud:      subprocess-call managed-agents/review.py synchronously. Blocks until review completes.
+                  Failure prints warning but doesn't fail the extract (signature itself is already written).
+    """
+    import subprocess
+
+    if mode == "standalone":
+        return
+    if mode == "team":
+        print(f"\ncogsig mode=team: signature written. For governance review, invoke:", file=sys.stderr)
+        print(f"  @agent-cognitive-signature-ide:brutus  review signature.{scope_name}.json", file=sys.stderr)
+        print(f"  @agent-cognitive-signature-ide:qa      compile-check signature.{scope_name}.json", file=sys.stderr)
+        print(f"  @agent-cognitive-signature-ide:historian  drift-check history.{scope_name}", file=sys.stderr)
+        return
+    if mode == "cloud":
+        plugin_root = Path(__file__).resolve().parent.parent.parent
+        managed_script = plugin_root / "managed-agents" / "review.py"
+        if not managed_script.exists():
+            print(f"cogsig mode=cloud: managed-agents script missing at {managed_script} — skipping auto-review", file=sys.stderr)
+            return
+        cmd = [sys.executable, str(managed_script), "--repo", str(repo)]
+        if scope_name != "default":
+            cmd.extend(["--scope-name", scope_name])
+        print(f"\ncogsig mode=cloud: auto-dispatching managed-agents review (brutus/qa/historian)...", file=sys.stderr)
+        try:
+            result = subprocess.run(cmd, check=False, timeout=300)
+            if result.returncode != 0:
+                print(f"cogsig mode=cloud: managed-agents review returned rc={result.returncode}", file=sys.stderr)
+            else:
+                print(f"cogsig mode=cloud: governance review complete", file=sys.stderr)
+        except (subprocess.TimeoutExpired, OSError) as e:
+            print(f"cogsig mode=cloud: managed-agents dispatch failed ({type(e).__name__}): {e}", file=sys.stderr)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Call Opus 4.7 on samples → signature.json")
     ap.add_argument("--repo", type=Path, default=Path.cwd())
@@ -338,6 +393,12 @@ def main() -> int:
         print(f"  reframe: {advisor_report.get('reframe')}")
         print(f"  suggested action: {advisor_report.get('suggested_action')}")
         print(f"  diagnosis: {advisor_report.get('diagnosis')}")
+
+    # Post-extraction mode hook: branch on active_mode (standalone/team/cloud) for
+    # governance behavior. Closes the cited-not-invoked gap between `/cogsig mode`
+    # state writes and actual pipeline behavior.
+    active_mode = _load_active_mode(repo)
+    _dispatch_mode_hook(active_mode, repo, args.scope_name, args.domain)
 
     return 0 if not errors else 3
 

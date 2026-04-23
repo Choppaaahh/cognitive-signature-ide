@@ -91,9 +91,11 @@ def render_signature_prefix(signature_path: Path) -> str | None:
 def render_pending_surface(pending_path: Path, preset: str) -> str | None:
     """Render pending-pattern review section for injection into Claude's context prefix.
 
-    In `normie` preset, returns None (silent auto-promotion — not yet wired; user still runs
-    `/cogsig approve` manually for now). In `power/team/enterprise` preset, returns a section
-    instructing Claude to surface the pending patterns naturally in its next response.
+    In `normie` preset, returns None — silent auto-promote is wired in
+    `review.cmd_refresh_queue` (patterns go straight to permanent at n>=2 once QA
+    passes), so the pending-queue stays empty in steady state and there's nothing
+    to surface. In `power/team/enterprise` preset, returns a section instructing
+    Claude to surface the pending patterns naturally in its next response.
     """
     if preset == "normie":
         return None
