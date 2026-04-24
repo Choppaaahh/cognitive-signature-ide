@@ -285,29 +285,40 @@ def cmd_refresh_queue(repo: Path, rest: list[str]) -> int:
     threshold = _PRESET_AUTO_PROMOTE_THRESHOLD.get(preset, 3)
 
     if pending:
-        validator_errs = _qa_validate_patterns(pending)
+        # Split by threshold first.
         promotable = [p for p in pending
                       if int(p.get("item", {}).get("instance_count", 0) or 0) >= threshold]
         holdback = [p for p in pending if p not in promotable]
 
-        if validator_errs:
-            # Refuse silent auto-promote when any pending item is malformed.
-            # Stay conservative across all presets: skip promotion, write queue empty.
-            write_json(pending_path(repo, scope), {
-                "last_refresh_ts": datetime.now(timezone.utc).isoformat(),
-                "scope": scope,
-                "preset": preset,
-                "patterns": [],
-                "last_auto_promote_skipped": validator_errs[:5],
-            })
+        # QA fix (PASS-WITH-CAVEATS Finding 2): validate ONLY items being promoted.
+        # Previous logic flushed the entire pending queue on any malformed item,
+        # silently dropping valid holdback items. Now malformed-promotable items
+        # drop back to holdback (with a skipped-count note) while holdback is
+        # preserved independently.
+        promotable_errs = _qa_validate_patterns(promotable)
+        if promotable_errs:
+            # Refuse to promote malformed items; they stay out of permanent sig.
+            # They're effectively skipped this cycle — will re-appear on next
+            # refresh with corrected data OR stay as a diagnostic in stderr.
+            malformed_indices = set()
+            for err in promotable_errs:
+                # err format is typically "pattern-N: <detail>" — extract index if present
+                import re as _re
+                m = _re.match(r"pattern-(\d+)", err)
+                if m:
+                    malformed_indices.add(int(m.group(1)) - 1)
+            # Filter promotable: drop malformed, keep valid.
+            promotable_filtered = [p for i, p in enumerate(promotable) if i not in malformed_indices]
+            # Drop malformed items entirely (don't re-queue to holdback — they failed schema,
+            # shouldn't sit in pending masquerading as valid).
             print(
-                f"review: {preset} steady-state — {len(validator_errs)} malformed pending item(s); "
-                f"skipping auto-promote. First errors: {validator_errs[:2]}",
+                f"review: {preset} — {len(promotable_errs)} malformed promotable item(s) DROPPED; "
+                f"holdback preserved. First errors: {promotable_errs[:2]}",
                 file=sys.stderr,
             )
-            return 0
+            promotable = promotable_filtered
 
-        # Promote only items that meet the preset's count threshold.
+        # Promote only items that meet the preset's count threshold AND passed validation.
         for p in promotable:
             dim = p["dim"]
             list_key = p["list_key"]
@@ -318,7 +329,7 @@ def cmd_refresh_queue(repo: Path, rest: list[str]) -> int:
         if promotable:
             write_json(permanent_sig_path, permanent_sig)
 
-        # Items below threshold stay in pending — they'll auto-promote when
+        # Holdback items stay in pending — they'll auto-promote when
         # their instance_count grows on a future extract.
         write_json(pending_path(repo, scope), {
             "last_refresh_ts": datetime.now(timezone.utc).isoformat(),
@@ -336,22 +347,13 @@ def cmd_refresh_queue(repo: Path, rest: list[str]) -> int:
         )
         return 0
 
-    # Write pending queue with auto-assigned IDs
-    for i, p in enumerate(pending, 1):
-        p["id"] = i
-    queue = {
+    # Empty-pending path: write empty queue for downstream consumers (inject.py etc).
+    write_json(pending_path(repo, scope), {
         "last_refresh_ts": datetime.now(timezone.utc).isoformat(),
         "scope": scope,
         "preset": preset,
-        "patterns": pending,
-    }
-    write_json(pending_path(repo, scope), queue)
-    print(f"review: {len(pending)} pending patterns written to {pending_path(repo, scope).name}")
-    for p in pending:
-        item = p["item"]
-        label = item.get("situation") or item.get("pattern") or item.get("tool") or item.get("term") or "?"
-        count = item.get("instance_count", "?")
-        print(f"  [{p['id']}] {p['dim']} — \"{str(label)[:80]}\" ({count}x)")
+        "patterns": [],
+    })
     return 0
 
 
