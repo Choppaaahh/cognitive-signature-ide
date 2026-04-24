@@ -266,17 +266,33 @@ def cmd_refresh_queue(repo: Path, rest: list[str]) -> int:
 
     pending = diff_signature(new_sig, permanent_sig, rejected_keys)
 
-    # STEADY-STATE normie branch: silent auto-promote. Per preset contract
-    # (README: "normie = hands-off, auto-promote patterns silently at n=2"),
-    # normie users don't review — patterns that pass the diff + n>=2 go straight
-    # to permanent. Keeps the hands-off promise intact on extract #2, #3, ...
-    # (first-run seed branch above handled #1 with no patterns to promote).
-    if preset == "normie" and pending:
+    # STEADY-STATE auto-promote — ALL 4 PRESETS get hands-off promotion with
+    # preset-specific count thresholds. The user never has to manually approve.
+    # Per-preset rationale (count = instance_count on the pattern item):
+    #   normie:     n≥2  (trusts extractor fully, fastest path)
+    #   power:      n≥5  (conservative solo user, waits for more evidence)
+    #   team:       n≥3  (in-session subagent dispatch-hook surfaces reminders separately;
+    #                     auto-promote still fires at count-bar regardless)
+    #   enterprise: n≥3  (cloud Managed Agents review fires in parallel via extract.py hook;
+    #                     auto-promote still fires at count-bar regardless)
+    # Malformed items (QA schema fail) are ALWAYS refused across all presets.
+    _PRESET_AUTO_PROMOTE_THRESHOLD = {
+        "normie": 2,
+        "power": 5,
+        "team": 3,
+        "enterprise": 3,
+    }
+    threshold = _PRESET_AUTO_PROMOTE_THRESHOLD.get(preset, 3)
+
+    if pending:
         validator_errs = _qa_validate_patterns(pending)
+        promotable = [p for p in pending
+                      if int(p.get("item", {}).get("instance_count", 0) or 0) >= threshold]
+        holdback = [p for p in pending if p not in promotable]
+
         if validator_errs:
             # Refuse silent auto-promote when any pending item is malformed.
-            # Stay conservative: write empty queue, print to stderr, return 0
-            # so the normie user isn't crashed by a bad upstream extract.
+            # Stay conservative across all presets: skip promotion, write queue empty.
             write_json(pending_path(repo, scope), {
                 "last_refresh_ts": datetime.now(timezone.utc).isoformat(),
                 "scope": scope,
@@ -285,29 +301,39 @@ def cmd_refresh_queue(repo: Path, rest: list[str]) -> int:
                 "last_auto_promote_skipped": validator_errs[:5],
             })
             print(
-                f"review: normie steady-state — {len(validator_errs)} malformed pending item(s); "
+                f"review: {preset} steady-state — {len(validator_errs)} malformed pending item(s); "
                 f"skipping auto-promote. First errors: {validator_errs[:2]}",
                 file=sys.stderr,
             )
             return 0
-        # Promote every valid pending item directly into permanent.
-        for p in pending:
+
+        # Promote only items that meet the preset's count threshold.
+        for p in promotable:
             dim = p["dim"]
             list_key = p["list_key"]
             item = p["item"]
             if dim not in permanent_sig.setdefault("dimensions", {}):
                 permanent_sig["dimensions"][dim] = {list_key: [], "confidence": 0.8}
             permanent_sig["dimensions"][dim][list_key].append(item)
-        write_json(permanent_sig_path, permanent_sig)
+        if promotable:
+            write_json(permanent_sig_path, permanent_sig)
+
+        # Items below threshold stay in pending — they'll auto-promote when
+        # their instance_count grows on a future extract.
         write_json(pending_path(repo, scope), {
             "last_refresh_ts": datetime.now(timezone.utc).isoformat(),
             "scope": scope,
             "preset": preset,
-            "patterns": [],
-            "last_auto_promote_count": len(pending),
-            "last_auto_promote_ts": datetime.now(timezone.utc).isoformat(),
+            "patterns": holdback,
+            "threshold": threshold,
+            "last_auto_promote_count": len(promotable),
+            "last_auto_promote_ts": datetime.now(timezone.utc).isoformat() if promotable else None,
         })
-        print(f"review: normie steady-state — auto-promoted {len(pending)} pattern(s) silently", file=sys.stderr)
+        print(
+            f"review: {preset} steady-state (threshold n≥{threshold}) — "
+            f"auto-promoted {len(promotable)}, holding {len(holdback)} pending until threshold",
+            file=sys.stderr,
+        )
         return 0
 
     # Write pending queue with auto-assigned IDs
