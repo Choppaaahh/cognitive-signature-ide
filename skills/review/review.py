@@ -290,33 +290,23 @@ def cmd_refresh_queue(repo: Path, rest: list[str]) -> int:
                       if int(p.get("item", {}).get("instance_count", 0) or 0) >= threshold]
         holdback = [p for p in pending if p not in promotable]
 
-        # QA fix (PASS-WITH-CAVEATS Finding 2): validate ONLY items being promoted.
-        # Previous logic flushed the entire pending queue on any malformed item,
-        # silently dropping valid holdback items. Now malformed-promotable items
-        # drop back to holdback (with a skipped-count note) while holdback is
-        # preserved independently.
-        promotable_errs = _qa_validate_patterns(promotable)
-        if promotable_errs:
-            # Refuse to promote malformed items; they stay out of permanent sig.
-            # They're effectively skipped this cycle — will re-appear on next
-            # refresh with corrected data OR stay as a diagnostic in stderr.
-            malformed_indices = set()
-            for err in promotable_errs:
-                # err format is typically "pattern-N: <detail>" — extract index if present
-                import re as _re
-                m = _re.match(r"pattern-(\d+)", err)
-                if m:
-                    malformed_indices.add(int(m.group(1)) - 1)
-            # Filter promotable: drop malformed, keep valid.
-            promotable_filtered = [p for i, p in enumerate(promotable) if i not in malformed_indices]
-            # Drop malformed items entirely (don't re-queue to holdback — they failed schema,
-            # shouldn't sit in pending masquerading as valid).
-            print(
-                f"review: {preset} — {len(promotable_errs)} malformed promotable item(s) DROPPED; "
-                f"holdback preserved. First errors: {promotable_errs[:2]}",
-                file=sys.stderr,
-            )
-            promotable = promotable_filtered
+        # QA R2 FIX (replaces broken regex-parse approach from f60bed9):
+        # per-item validation by identity, not by error-string index parsing.
+        # Validates each promotable item individually + filters by actual result.
+        # Holdback preserved independently (it never gets validated — those items
+        # wait at their current count for future growth, no schema check needed yet).
+        promotable_valid = []
+        for p_item in promotable:
+            item_errs = _qa_validate_patterns([p_item])
+            if item_errs:
+                print(
+                    f"review: {preset} — malformed promotable item DROPPED "
+                    f"({p_item.get('dim')} id={p_item.get('id','?')}): {item_errs[0]}",
+                    file=sys.stderr,
+                )
+            else:
+                promotable_valid.append(p_item)
+        promotable = promotable_valid
 
         # Promote only items that meet the preset's count threshold AND passed validation.
         for p in promotable:
