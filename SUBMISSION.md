@@ -9,7 +9,7 @@ Demo: `demo-video/demo.html` (zero-install, auto-play 2:31 in any browser)
 
 ## One-line pitch
 
-Claude quietly syncs to your cognitive signature — voice (directives, conversational flow, idiomatic tells) + operational patterns (failure modes, reasoning chains, recurring decisions) — and stays aligned as you change.
+Claude quietly syncs to your cognitive signature — voice (directives, conversational flow, idiomatic tells) + operational patterns (failure modes, reasoning chains, recurring decisions). The plugin **injects** your signature into Claude's context every prompt, and **acts** on signature violations at write-time (v2 PreToolUse detector). Inject + act, not inject alone.
 
 ---
 
@@ -25,9 +25,11 @@ The data to fix this is already on disk. Claude Code stores every session as JSO
 
 A Claude Code plugin with **two functionalities on one pipeline**:
 
-1. **Voice signature** — extracts how you direct AI (7 dimensions: directive style, compression, reframe patterns, trust signals, idiomatic tells, iteration cadence, texture). Injected into Claude's response context.
+1. **Voice signature** — extracts how you direct AI (7 dimensions: directive style, compression, reframe patterns, trust signals, idiomatic tells, iteration cadence, texture). Injected into Claude's response context (Claude reads + chooses how closely to mirror).
 
-2. **Operational signature** — extracts recurring decision templates, failure patterns, tooling invocations, and vocabulary anchors from multi-turn scaffold work. Auto-promoted to a permanent signature when n≥2 instances observed. User reviews or silent-promotes depending on mode.
+2. **Operational signature** — extracts recurring decision templates, failure patterns, tooling invocations, and vocabulary anchors from multi-turn scaffold work. Auto-promoted to a permanent signature when n≥2 instances observed AND a deterministic QA schema validation passes (`cmd_approve` REJECTS malformed patterns at write-time). User reviews or silent-promotes depending on mode.
+
+**Architecture: inject + act.** v1 hooks INJECT-CONTEXT (signature primes context every prompt, model decides). v2 adds a PreToolUse signature-violation detector that REJECTS or WARNS on writes diverging from the signature. See `README.md` *Architecture: Inject + Act* + `CYCLE-25-ENFORCEMENT-NOTES.md`.
 
 **Four onboarding presets** map to **three deploy modes**: `normie`→`standalone`, `power`→`standalone`, `team`→`team`, `enterprise`→`cloud`. Normie = silent auto-promote. Power+ = review-first, Claude surfaces pending patterns at session start. Users can always override the mode after init with `/cogsig mode <name>`.
 

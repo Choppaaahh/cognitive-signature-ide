@@ -1,6 +1,6 @@
 # Cognitive Signature IDE
 
-**Claude quietly syncs to your cognitive signature — voice (directives, conversational flow, idiomatic tells) + operational patterns (failure modes, reasoning chains, recurring decisions) — and stays aligned as you change.**
+**Claude quietly syncs to your cognitive signature — voice (directives, conversational flow, idiomatic tells) + operational patterns (failure modes, reasoning chains, recurring decisions). The plugin injects your signature into Claude's context every prompt; Claude reads it and chooses whether to mirror it. Stronger enforcement (PreToolUse violation detector) ships in v2 — see *Architecture: Inject + Act*.**
 
 A Claude Code plugin that auto-promotes patterns from how you direct AI and from what you've learned through usage. Two functionalities across one pipeline. Three user types. Hands-off by default; user surfaced only on conflict. Built for the **Built with Opus 4.7** hackathon (Cerebral Valley + Anthropic), April 2026.
 
@@ -32,7 +32,7 @@ Your **cognitive signature** has two layers. The plugin captures both.
 
 How you talk to AI. Directive style, compression ratio, reframe patterns ("wait but", "hmmmm"), trust signals ("cook it" vs "hold on"), idiomatic tells, iteration cadence, texture energy. Seven dimensions, each with confidence + evidence.
 
-Extracted from raw user-typed directives across your Claude Code session history. No ingestion of polished output — only what you contributed directly. Injected into Claude's response context so suggestions match your tempo and voice.
+Extracted from raw user-typed directives across your Claude Code session history. No ingestion of polished output — only what you contributed directly. Injected into Claude's response context so suggestions can match your tempo and voice — the model reads the signature each prompt and decides how closely to follow it. (See *Architecture: Inject + Act* for honest classification of inject-tier vs enforce-tier mechanics.)
 
 **Status**: shipped and live-verified. 100% auto-scorer accuracy (see *Measurement*).
 
@@ -49,7 +49,7 @@ Four dimensions in the shipped schema (v0.2 after adversarial review):
 
 Every item requires `instance_count` + `evidence_list` of actual direct quotes. No frequency-enum handwaving; objective defensible counting.
 
-Governance-promoted-only: every pattern passes QA schema validation before entering the permanent signature (deterministic, fast, $0 — refuses malformed items). In `cloud` mode, Brutus (adversarial) and Historian (drift) also run via Managed Agents before promotion. In `team` mode, in-session Brutus/QA/Historian subagents are invokable at the prompt (`@agent-cognitive-signature-ide:<name>`). Hallucinated patterns don't stick.
+Governance-promoted-only: every pattern passes a QA schema validation gate before entering the permanent signature (deterministic, fast, $0 — refuses malformed items at `cmd_approve` write-time, raising exit=1 if any pattern fails required-field / type / instance_count>=2 / non-empty evidence_list checks). This is one of the two real force-mechanics in the pipeline (see *Architecture: Inject + Act*). In `cloud` mode, Brutus (adversarial) and Historian (drift) also run via Managed Agents before promotion. In `team` mode, in-session Brutus/QA/Historian subagents are invokable at the prompt (`@agent-cognitive-signature-ide:<name>`). Hallucinated patterns don't stick.
 
 **Status**: **live-shipped**. `/cogsig init` extracts BOTH voice and operational signatures by default in one command. Same pipeline, different extraction lens on the same corpus. Architecture extends naturally to additional pattern classes (bug patterns as typed sub-class of failure_patterns, reasoning-chain patterns, domain-specific patterns, cross-team patterns) as usage corpus grows.
 
@@ -84,6 +84,56 @@ Default posture: zero touch. The plugin runs quietly in the background. Advisor 
 - Significant new patterns promoted (optional — enable via toggle)
 
 The governance layer is the product. Most of the time you don't see it working. When you do, it's because something needs your attention — not noise.
+
+---
+
+## Architecture: Inject + Act (v1 → v2)
+
+A cycle-25 audit (parent scaffold, 2026-04-25) sharpened the distinction between **invocation** (text appears in Claude's context) and **execution** (Claude's behavior actually changes). CogSig is honest about which tier each mechanism lives in.
+
+### Hook tier classification
+
+| Tier | Mechanic | Force? |
+|------|----------|--------|
+| **REJECT / REWRITE** | Block or modify the tool call before it runs | YES (architectural) |
+| **INJECT-CONTEXT** | Prepend curated content (signature.json) to context | NO — model decides whether to mirror it |
+| **INJECT-REMINDER** | Imperative prose ("REMEMBER to do X") | NO — willpower-gated |
+| **PASSIVE-CHECK** | Diagnostic write-only (status reports, logs) | NO — informational |
+
+### CogSig v1 — what's shipped today
+
+| Mechanism | Tier | Notes |
+|-----------|------|-------|
+| `hooks/session-start.sh` | PASSIVE-CHECK | Emits CogSig status block on session open. Diagnostic. |
+| `hooks/user-prompt-submit.sh` | INJECT-CONTEXT | Runs `inject.py`, prepends `signature.json` to Claude's context every prompt. Claude reads the signature; Claude chooses how closely to follow. |
+| `cmd_approve` QA gate (`skills/review/review.py`) | **REJECT** (force) | Refuses to write malformed patterns into permanent signature. Tier-1 substrate-lock at the pattern-promotion edge. |
+| `cmd_approve` cloud governance (`active_mode == cloud`) | **REJECT** (force, opt-in) | Subprocess-calls `managed-agents/review.py`; failure refuses approval (fails closed). |
+
+**Honest v1 reading:** the hook layer is INJECT-only (no force-mechanics on tool calls). The pattern-promotion layer has 2 force-mechanics (QA gate always, cloud-governance gate in cloud mode). Pattern injection is structurally stronger than rule reminders because it primes Claude with curated descriptive content rather than imperative phrasing — but the model still decides whether to mirror it.
+
+### CogSig v2 — adding the act layer
+
+User reframe: *"we wanna be injecting AND acting"*.
+
+v2 adds a `PreToolUse` signature-violation detector on `Edit` / `Write` / `MultiEdit`. When the proposed write violates a confidently-extracted signature dimension (e.g., signature says `compression: terse(0.85)` but proposed write produces a 2x-paragraph corporate-formal draft), the hook either:
+
+- **WARN mode (default)** — emits a violation receipt to context: `"SIGNATURE-VIOLATION: dimension=compression, signature=terse(0.85), proposed=verbose. Consider revision before write."` Non-blocking; Claude may proceed. Surface lets the user catch divergence inline.
+- **REJECT mode (opt-in)** — exits non-zero, blocking the tool call. Claude must regenerate aligned with signature, or user must override.
+
+False-positive whitelist:
+- Signature dimensions below confidence threshold (default 0.6) DON'T fire.
+- Files matching `.cogsig-no-enforce` patterns skip the check.
+- Tool calls explicitly tagged with `signature-override:` opt out.
+
+| Layer | v1 | v2 |
+|-------|----|----|
+| Hooks | 2 (PASSIVE + INJECT-CONTEXT) | 3 (adds REJECT/WARN) |
+| Hook substrate-lock fraction | 0/2 | 1/3 |
+| Pipeline force-mechanics | 1-2 (QA gate + cloud governance) | 2-3 (adds PreToolUse violation gate) |
+
+The v1 mechanics stay shipped. v2 closes the gap at the tool-use boundary: signature divergence gets caught at write-time instead of only surfacing in user post-hoc review.
+
+See `skills/enforce/SKILL.md` for the v2 user-facing surface (`/cogsig enforce <off|warn|reject>`) and `CYCLE-25-ENFORCEMENT-NOTES.md` for the full architectural decision log + parent-scaffold audit cross-reference (`pattern-discipline-at-layer-N-not-invocation-at-layer-M`).
 
 ---
 
@@ -182,7 +232,7 @@ PROMPT TO BOTH: "draft me a quick reply explaining why we're pivoting"
 └─────────────────────────────────────┘   └──────────────────────────┘
 ```
 
-Same information. Radically different shape. The right column matches the user's actual directing style — compressed, lowercase-casual, scaffold-vocab, "tmr" shorthand, parallel-structure thinking.
+Same information. Radically different shape. The right column reflects the user's actual directing style — compressed, lowercase-casual, scaffold-vocab, "tmr" shorthand, parallel-structure thinking. The signature primes the model to lean this way; the model still chooses each token, and on any given prompt the alignment can be partial. Repeated runs are visibly more consistent with the signature than naked-Claude runs (per the auto-scorer 10/10 result), not deterministically identical.
 
 ---
 
