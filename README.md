@@ -307,8 +307,6 @@ The governance architecture catches defects in its own construction. The plugin'
 3. **Pivoted** to writing-signature. Same structural problem: users in coupled workflows don't direct-author their prose either. The polished output is joint.
 4. **Pivoted again** to directing-signature. Raw typed directives are the one corpus that's unambiguously user-authored. Verified against a real 80-directive corpus from live Claude Code sessions — extracted signature carried real user-specific vocabulary, real trust mechanics, real iteration cadence.
 
-The iteration IS part of the product. Both versions live in the commit history as evidence of honest architectural discovery. Meta-level: the architecture revealed its own correct target when tested against real users.
-
 ---
 
 ## Architecture
