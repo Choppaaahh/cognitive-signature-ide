@@ -89,7 +89,7 @@ The governance layer is the product. Most of the time you don't see it working. 
 
 ## Architecture: Inject + Act (v1 → v2)
 
-A cycle-25 audit (parent scaffold, 2026-04-25) sharpened the distinction between **invocation** (text appears in Claude's context) and **execution** (Claude's behavior actually changes). CogSig is honest about which tier each mechanism lives in.
+A follow-up audit sharpened the distinction between **invocation** (text appears in Claude's context) and **execution** (Claude's behavior actually changes). CogSig is honest about which tier each mechanism lives in.
 
 ### Hook tier classification
 
@@ -133,7 +133,7 @@ False-positive whitelist:
 
 The v1 mechanics stay shipped. v2 closes the gap at the tool-use boundary: signature divergence gets caught at write-time instead of only surfacing in user post-hoc review.
 
-See `skills/enforce/SKILL.md` for the v2 user-facing surface (`/cogsig enforce <off|warn|reject>`) and `CYCLE-25-ENFORCEMENT-NOTES.md` for the full architectural decision log + parent-scaffold audit cross-reference (`pattern-discipline-at-layer-N-not-invocation-at-layer-M`).
+See `skills/enforce/SKILL.md` for the v2 user-facing surface (`/cogsig enforce <off|warn|reject>`) and `ENFORCEMENT-NOTES.md` for the full architectural decision log.
 
 ---
 

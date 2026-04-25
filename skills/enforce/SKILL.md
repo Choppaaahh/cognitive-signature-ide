@@ -7,7 +7,7 @@ allowed-tools: [Read, Write]
 
 # enforce — CogSig v2 enforcement layer
 
-Closes the inject-vs-act gap diagnosed by the cycle-25 cite-vs-invoke audit. The
+Closes the inject-vs-act gap diagnosed by a follow-up cite-vs-invoke audit. The
 existing `inject` skill puts the signature in front of Claude on every prompt,
 but Claude could still produce code that violates the signature with no
 consequence. The `enforce` layer fires on `PreToolUse:Edit|Write|MultiEdit`,

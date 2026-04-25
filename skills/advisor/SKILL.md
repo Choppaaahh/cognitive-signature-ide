@@ -40,4 +40,4 @@ Anthropic's Claude Advisor pattern applied to CogSig's pipeline. Executor agents
 
 ## Scaffold precedent
 
-This pattern is documented in the private scaffold's `pattern-advisor-consult-at-inflection-points` (emerging n=3, 2026-04-20). Three validated instances: temporal-fabrication rule-level fix instead of verbal-discipline; retrieval tournament benchmark reframe; persistent-vs-ephemeral team mode clarification. The pattern maps operationally to Anthropic's Claude Advisor tool (Haiku-executor + Opus-advisor pairing).
+This pattern emerged from prior internal work documenting cases where surfacing a model-rated decision-quality verdict at inflection points changes downstream behavior. Three validated instance types: rule-level fixes substituted for verbal-discipline; benchmark reframings; clarifying ambiguous mode boundaries. The pattern maps operationally to Anthropic's Claude Advisor tool (Haiku-executor + Opus-advisor pairing).
