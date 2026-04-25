@@ -31,6 +31,7 @@ def state_path(repo: Path) -> Path:
 
 
 VALID_MODES = ("standalone", "team", "cloud")
+VALID_ENFORCE_MODES = ("off", "warn", "reject")
 
 
 def load_state(repo: Path) -> dict:
@@ -188,6 +189,48 @@ def _print_mode_description(mode: str, indent: str = "  ") -> None:
         print(f"{indent}{desc}")
 
 
+def cmd_toggle_enforce(repo: Path, rest: list[str]) -> int:
+    """/cogsig toggle-enforce <off|warn|reject> | status — control v2 enforcement mode."""
+    if not rest or rest[0] == "status":
+        state = load_state(repo)
+        mode = state.get("enforcement_mode", "warn")
+        print(f"cogsig: enforcement mode = {mode}")
+        _print_enforce_description(mode)
+        return 0
+    target = rest[0]
+    if target not in VALID_ENFORCE_MODES:
+        print(f"cogsig: unknown enforcement mode '{target}'. Valid: {', '.join(VALID_ENFORCE_MODES)}", file=sys.stderr)
+        return 1
+    state = load_state(repo)
+    state["enforcement_mode"] = target
+    state["enforcement_mode_switched_at"] = datetime.now(timezone.utc).isoformat()
+    save_state(repo, state)
+    print(f"cogsig: enforcement mode -> {target}")
+    _print_enforce_description(target)
+    return 0
+
+
+def _print_enforce_description(mode: str, indent: str = "  ") -> None:
+    descriptions = {
+        "off": "no enforcement; PreToolUse hook passes through silently",
+        "warn": "advisory only — violations surfaced as text but tool calls always proceed (default; safe)",
+        "reject": "high-severity violations exit 1 and block the tool call; medium/low still pass with advisory",
+    }
+    desc = descriptions.get(mode)
+    if desc:
+        print(f"{indent}{desc}")
+
+
+def cmd_pause_enforce(repo: Path, _rest: list[str]) -> int:
+    """/cogsig pause-enforce — bypass enforcement for the next single tool call."""
+    cache_dir = repo / ".signature-cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    flag = cache_dir / "enforcement_pause"
+    flag.touch()
+    print("cogsig: enforcement paused for next tool call (auto-clears on use)")
+    return 0
+
+
 def cmd_diff(repo: Path, _rest: list[str]) -> int:
     print("cogsig: diff mode not yet implemented (Step 5 target).")
     print("  planned: render next response under three conditions — baseline / placebo / real signature")
@@ -236,6 +279,8 @@ HANDLERS = {
     "scope": cmd_scope,
     "mode": cmd_mode,
     "diff": cmd_diff,
+    "toggle-enforce": cmd_toggle_enforce,
+    "pause-enforce": cmd_pause_enforce,
 }
 
 
