@@ -23,10 +23,14 @@ cat >/dev/null
 REPO="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 INJECT="$PLUGIN_ROOT/skills/inject/inject.py"
+LOG_FILE="${HOME}/.claude/cogsig-enforcement-log.jsonl"
+mkdir -p "$(dirname "$LOG_FILE")"
+TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 if [[ ! -f "$INJECT" ]]; then
     # Hook can still be useful in dev setups without the plugin fully wired;
     # fail soft rather than break user's prompt flow.
+    echo "{\"ts\":\"$TS\",\"source\":\"cogsig-user-prompt-submit\",\"trigger\":\"UserPromptSubmit\",\"trust_tier\":\"scripted\",\"result\":\"SKIPPED\",\"reason\":\"inject-script-missing\"}" >> "$LOG_FILE" 2>/dev/null || true
     exit 0
 fi
 
@@ -34,5 +38,8 @@ fi
 # stderr messages ("off" or "no signature found") are suppressed so user-facing
 # output only shows on the successful-injection path.
 python3 "$INJECT" --repo "$REPO" 2>/dev/null || true
+
+# Audit-trail row (so consumers can count fire frequency vs miss frequency).
+echo "{\"ts\":\"$TS\",\"source\":\"cogsig-user-prompt-submit\",\"trigger\":\"UserPromptSubmit\",\"trust_tier\":\"scripted\",\"result\":\"FIRED\",\"reason\":\"inject-attempted\"}" >> "$LOG_FILE" 2>/dev/null || true
 
 exit 0
