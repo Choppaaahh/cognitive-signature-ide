@@ -82,10 +82,16 @@ if [[ -f "$STATE_FILE" ]]; then
     ACTIVE_SCOPE="$(jq -r '.active_scope // "default"' "$STATE_FILE" 2>/dev/null || echo default)"
 fi
 
-# Per-turn pause: if flag exists, consume it (delete) and pass
+# Per-turn pause: atomic flag consumption (mv is atomic on POSIX — succeeds
+# for exactly ONE process if multiple hook invocations race on the same flag).
 if [[ -f "$PAUSE_FLAG" ]]; then
-    rm -f "$PAUSE_FLAG"
-    exit 0
+    if mv "$PAUSE_FLAG" "$PAUSE_FLAG.consumed.$$" 2>/dev/null; then
+        rm -f "$PAUSE_FLAG.consumed.$$"
+        TS_PAUSE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "{\"ts\":\"$TS_PAUSE\",\"source\":\"cogsig-pre-tool-use-enforce\",\"trigger\":\"PreToolUse:$TOOL_NAME\",\"trust_tier\":\"scripted\",\"file\":\"$FILE_PATH\",\"result\":\"PAUSED\",\"reason\":\"override-flag\"}" >> "$LOG_FILE" 2>/dev/null || true
+        exit 0
+    fi
+    # mv failed (lost the race) — fall through to normal enforcement
 fi
 
 if [[ "$ACTIVE_SCOPE" == "default" ]]; then
@@ -122,6 +128,8 @@ if [[ -n "$WL_PATTERNS" && -n "$FILE_PATH" ]]; then
     done <<< "$WL_PATTERNS"
 fi
 if [[ "$WHITELIST_HIT" == "1" ]]; then
+    TS_WL="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "{\"ts\":\"$TS_WL\",\"source\":\"cogsig-pre-tool-use-enforce\",\"trigger\":\"PreToolUse:$TOOL_NAME\",\"trust_tier\":\"scripted\",\"file\":\"$FILE_PATH\",\"result\":\"WHITELISTED\",\"reason\":\"file-path-whitelist\"}" >> "$LOG_FILE" 2>/dev/null || true
     exit 0
 fi
 
